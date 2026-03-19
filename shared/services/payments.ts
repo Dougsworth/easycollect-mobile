@@ -1,0 +1,87 @@
+import { supabase } from '@/lib/supabase';
+import { createNotification } from '@/shared/services/notifications';
+import { logActivity } from '@/shared/services/activityLog';
+import type { PaymentWithDetails } from '@/shared/types/app.types';
+
+export async function getPayments(landlordId: string): Promise<PaymentWithDetails[]> {
+  const { data, error } = await supabase
+    .from('payments')
+    .select(`
+      *,
+      tenant:tenants(first_name, last_name, unit:units(name, property:properties(name))),
+      invoice:invoices(invoice_number)
+    `)
+    .eq('landlord_id', landlordId)
+    .order('payment_date', { ascending: false });
+
+  if (error) throw error;
+
+  return ((data ?? []) as any[]).map((p): PaymentWithDetails => {
+    const tenant = p.tenant as any;
+    const invoice = p.invoice as any;
+    return {
+      ...p,
+      tenant_first_name: tenant?.first_name ?? '',
+      tenant_last_name: tenant?.last_name ?? '',
+      unit_name: tenant?.unit?.name ?? '',
+      property_name: tenant?.unit?.property?.name ?? '',
+      invoice_number: invoice?.invoice_number ?? null,
+    };
+  });
+}
+
+export async function createPayment(landlordId: string, payment: {
+  tenant_id: string;
+  invoice_id?: string | null;
+  amount: number;
+  payment_date?: string;
+  method?: 'bank_transfer' | 'card' | 'cash' | 'other';
+  notes?: string;
+}) {
+  const { data, error } = await supabase
+    .from('payments')
+    .insert({
+      ...payment,
+      landlord_id: landlordId,
+      payment_number: 'TEMP',
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  if (payment.invoice_id) {
+    await supabase
+      .from('invoices')
+      .update({ status: 'paid' })
+      .eq('id', payment.invoice_id);
+  }
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('first_name, last_name')
+    .eq('id', payment.tenant_id)
+    .single();
+  const tenantName = tenant ? `${tenant.first_name} ${tenant.last_name}` : 'A tenant';
+  createNotification(
+    landlordId,
+    'payment_received',
+    'Payment Received',
+    `${tenantName} paid J$${payment.amount.toLocaleString()}`,
+    (data as any).id,
+  );
+  logActivity(landlordId, 'payment_created', 'payment', `Recorded payment from ${tenantName} — J$${payment.amount.toLocaleString()}`, (data as any).id, { amount: payment.amount, method: payment.method });
+
+  return data;
+}
+
+export async function getPaymentsForTenant(tenantId: string) {
+  const { data, error } = await supabase
+    .from('payments')
+    .select('*, invoice:invoices(invoice_number)')
+    .eq('tenant_id', tenantId)
+    .order('payment_date', { ascending: false });
+
+  if (error) throw error;
+  return data ?? [];
+}
