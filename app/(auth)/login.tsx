@@ -7,7 +7,7 @@ import { Button, Input } from '@/components/ui';
 import { PageHeader } from '@/components/PageHeader';
 
 export default function LoginScreen() {
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -65,6 +65,25 @@ export default function LoginScreen() {
             <Button onPress={handleLogin} loading={loading} className="mt-2">
               Sign In
             </Button>
+
+            {/* Divider */}
+            <View className="flex-row items-center my-5">
+              <View className="flex-1 h-px bg-border" />
+              <Text className="mx-3 text-xs text-muted-foreground uppercase">or</Text>
+              <View className="flex-1 h-px bg-border" />
+            </View>
+
+            {/* Google Sign In */}
+            <Pressable
+              onPress={async () => {
+                const { error: gError } = await signInWithGoogle();
+                if (gError) setError(gError);
+              }}
+              className="h-12 flex-row items-center justify-center rounded-xl border border-border bg-white"
+              style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+            >
+              <Text className="text-base font-medium text-foreground">Continue with Google</Text>
+            </Pressable>
 
             <Link href="/(auth)/forgot-password" asChild>
               <Pressable className="mt-4 items-center">

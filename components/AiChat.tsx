@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { View, Text, TextInput, FlatList, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { MessageCircle, Send, X } from 'lucide-react-native';
@@ -10,10 +10,18 @@ import * as Crypto from 'expo-crypto';
 export function AiChat() {
   const { user } = useAuth();
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const flatListRef = useRef<FlatList>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+    }
+  }, [messages.length]);
 
   const handleOpen = () => {
     setIsOpen(true);
@@ -92,11 +100,13 @@ export function AiChat() {
           </View>
 
           <FlatList
+            ref={flatListRef}
             data={messages}
             keyExtractor={m => m.id}
             className="flex-1 px-4"
             contentContainerClassName="py-3"
             inverted={false}
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
             renderItem={({ item }) => (
               <View className={`mb-3 max-w-[85%] ${item.role === 'user' ? 'self-end' : 'self-start'}`}>
                 <View className={`rounded-2xl px-4 py-2.5 ${

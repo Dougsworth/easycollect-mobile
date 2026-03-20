@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
 import type { Profile } from '@/shared/types/app.types';
 
@@ -10,6 +12,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string, metadata: { first_name: string; last_name: string; role: 'landlord' | 'tenant' }) => Promise<{ error: string | null }>;
+  signInWithGoogle: () => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   isLandlord: boolean;
   isTenant: boolean;
@@ -114,6 +117,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: error.message };
   };
 
+  const signInWithGoogle = async () => {
+    try {
+      const redirectUrl = Linking.createURL('/');
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error) return { error: error.message };
+      if (!data.url) return { error: 'Failed to get auth URL' };
+
+      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+
+      if (result.type === 'success') {
+        const url = new URL(result.url);
+        const params = new URLSearchParams(url.hash.substring(1));
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+
+        if (accessToken && refreshToken) {
+          await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+        }
+      }
+
+      return { error: null };
+    } catch (err: any) {
+      return { error: err.message ?? 'Google sign-in failed' };
+    }
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setProfile(null);
@@ -126,6 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     signIn,
     signUp,
+    signInWithGoogle,
     signOut,
     isLandlord: profile?.role === 'landlord',
     isTenant: profile?.role === 'tenant',

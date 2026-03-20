@@ -1,4 +1,5 @@
 import { Pressable, Text, ActivityIndicator } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { cn } from '@/lib/utils';
 
 interface ButtonProps {
@@ -42,17 +43,30 @@ export function Button({
   loading = false,
   className,
 }: ButtonProps) {
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onPress?.();
+  };
+
   return (
     <Pressable
-      onPress={onPress}
+      onPress={handlePress}
       disabled={disabled || loading}
+      style={({ pressed }) => ({
+        opacity: disabled || loading ? 0.5 : pressed ? 0.85 : 1,
+        transform: [{ scale: pressed && !disabled ? 0.97 : 1 }],
+      })}
       className={cn(
         'flex-row items-center justify-center rounded-xl',
         variantStyles[variant],
         sizeStyles[size],
-        (disabled || loading) && 'opacity-50',
         className,
       )}
+      android_ripple={
+        variant === 'default' || variant === 'destructive'
+          ? { color: 'rgba(255,255,255,0.2)', borderless: false }
+          : { color: 'rgba(0,0,0,0.08)', borderless: false }
+      }
     >
       {loading ? (
         <ActivityIndicator size="small" color={variant === 'default' || variant === 'destructive' ? '#fff' : '#3b82f6'} />

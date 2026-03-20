@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, FlatList, TextInput, RefreshControl, Pressable, ScrollView, Image, Alert } from 'react-native';
+import { View, Text, FlatList, TextInput, RefreshControl, Pressable, ScrollView, Image, Alert, Modal, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Search, CheckCircle, XCircle, Eye } from 'lucide-react-native';
+import { Search, CheckCircle, XCircle, X } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { getPayments } from '@/shared/services/payments';
 import { getProofsForLandlord, approveProof, rejectProof } from '@/shared/services/paymentProofs';
@@ -22,6 +22,7 @@ export default function PaymentsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
+  const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('payments');
 
   const loadData = useCallback(async () => {
@@ -128,7 +129,12 @@ export default function PaymentsScreen() {
                     <Text className="text-xs text-muted-foreground">{proof.invoice_number} — J${proof.invoice_amount.toLocaleString()}</Text>
                   </View>
                 </View>
-                <Image source={{ uri: proof.image_url }} className="w-full h-48 rounded-xl bg-muted mb-3" resizeMode="cover" />
+                <Pressable onPress={() => setZoomImage(proof.image_url)}>
+                  <Image source={{ uri: proof.image_url }} className="w-full h-48 rounded-xl bg-muted mb-3" resizeMode="cover" />
+                  <View className="absolute top-2 right-2 bg-black/50 rounded-full p-1.5">
+                    <Search size={14} color="#fff" />
+                  </View>
+                </Pressable>
                 <View className="flex-row gap-2">
                   <Button variant="default" size="sm" onPress={() => handleApprove(proof)} className="flex-1">
                     <View className="flex-row items-center gap-1">
@@ -148,6 +154,23 @@ export default function PaymentsScreen() {
           )}
         </ScrollView>
       )}
+      {/* Image Zoom Modal */}
+      <Modal visible={!!zoomImage} transparent animationType="fade" onRequestClose={() => setZoomImage(null)}>
+        <View className="flex-1 bg-black">
+          <Pressable onPress={() => setZoomImage(null)} className="absolute top-14 right-4 z-10 bg-white/20 rounded-full p-2">
+            <X size={24} color="#fff" />
+          </Pressable>
+          {zoomImage && (
+            <View className="flex-1 items-center justify-center">
+              <Image
+                source={{ uri: zoomImage }}
+                style={{ width: Dimensions.get('window').width, height: Dimensions.get('window').height * 0.8 }}
+                resizeMode="contain"
+              />
+            </View>
+          )}
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
