@@ -32,16 +32,6 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-web-browser",
-      "expo-sharing",
-      "@react-native-community/datetimepicker",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/icon.png",
-          "color": "#3b82f6"
-        }
-      ],
       [
         "expo-image-picker",
         {
@@ -49,6 +39,12 @@
           "cameraPermission": "Allow EasyCollect to use your camera to take photos of payment proofs."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "583f4db7-3c3a-4f60-b2b4-a5de5f1dc040"
+      }
+    }
   }
 }

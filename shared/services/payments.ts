@@ -3,16 +3,17 @@ import { createNotification } from '@/shared/services/notifications';
 import { logActivity } from '@/shared/services/activityLog';
 import type { PaymentWithDetails } from '@/shared/types/app.types';
 
-export async function getPayments(landlordId: string): Promise<PaymentWithDetails[]> {
+export async function getPayments(landlordId: string, limit = 100): Promise<PaymentWithDetails[]> {
   const { data, error } = await supabase
     .from('payments')
     .select(`
-      *,
+      id, amount, payment_date, method, notes, payment_number, invoice_id, tenant_id, landlord_id, created_at,
       tenant:tenants(first_name, last_name, unit:units(name, property:properties(name))),
       invoice:invoices(invoice_number)
     `)
     .eq('landlord_id', landlordId)
-    .order('payment_date', { ascending: false });
+    .order('payment_date', { ascending: false })
+    .limit(limit);
 
   if (error) throw error;
 
@@ -38,6 +39,10 @@ export async function createPayment(landlordId: string, payment: {
   method?: 'bank_transfer' | 'card' | 'cash' | 'other';
   notes?: string;
 }) {
+  if (payment.amount <= 0) {
+    throw new Error('Payment amount must be greater than zero.');
+  }
+
   const { data, error } = await supabase
     .from('payments')
     .insert({
@@ -50,13 +55,20 @@ export async function createPayment(landlordId: string, payment: {
 
   if (error) throw error;
 
+  // Mark invoice as paid (best-effort — payment is recorded regardless)
   if (payment.invoice_id) {
-    await supabase
+    const { error: invoiceError } = await supabase
       .from('invoices')
       .update({ status: 'paid' })
-      .eq('id', payment.invoice_id);
+      .eq('id', payment.invoice_id)
+      .in('status', ['pending', 'overdue']);
+
+    if (invoiceError) {
+      console.error('Failed to update invoice status:', invoiceError);
+    }
   }
 
+  // Fire-and-forget: notification + activity log
   const { data: tenant } = await supabase
     .from('tenants')
     .select('first_name, last_name')
@@ -78,9 +90,10 @@ export async function createPayment(landlordId: string, payment: {
 export async function getPaymentsForTenant(tenantId: string) {
   const { data, error } = await supabase
     .from('payments')
-    .select('*, invoice:invoices(invoice_number)')
+    .select('id, amount, payment_date, method, payment_number, invoice:invoices(invoice_number)')
     .eq('tenant_id', tenantId)
-    .order('payment_date', { ascending: false });
+    .order('payment_date', { ascending: false })
+    .limit(50);
 
   if (error) throw error;
   return data ?? [];

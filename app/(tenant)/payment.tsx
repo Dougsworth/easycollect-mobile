@@ -37,8 +37,6 @@ export default function TenantPaymentScreen() {
     setUploading(true);
     try {
       const imageUrl = await uploadProofImage(image);
-
-      // Find tenant record for this user
       const { data: tenant } = await supabase
         .from('tenants')
         .select('id, landlord_id')
@@ -58,41 +56,56 @@ export default function TenantPaymentScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background-secondary">
       <PageHeader title="Submit Payment" showBack />
-      <ScrollView className="flex-1 px-6">
-        <Card className="mb-4">
-          <Text className="text-sm text-muted-foreground">Invoice Amount</Text>
-          <Text className="text-3xl font-bold text-foreground">J${Number(amount).toLocaleString()}</Text>
+      <ScrollView className="flex-1 px-5" contentContainerClassName="pb-8">
+        {/* Amount Card */}
+        <Card className="mb-5">
+          <Text className="text-sm font-medium text-muted-foreground">Invoice Amount</Text>
+          <Text className="text-4xl font-bold text-foreground mt-1 tracking-tight">J${Number(amount).toLocaleString()}</Text>
         </Card>
 
-        <CardTitle className="mb-3">Upload Payment Proof</CardTitle>
-        <Text className="text-sm text-muted-foreground mb-4">
-          Take a photo or upload an image of your bank receipt or payment slip.
-        </Text>
+        {/* Upload Section */}
+        <View
+          className="bg-white rounded-2xl p-5"
+          style={{
+            borderWidth: 1,
+            borderColor: 'rgba(226,232,240,0.6)',
+            shadowColor: '#0f172a',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.04,
+            shadowRadius: 8,
+            elevation: 2,
+          }}
+        >
+          <CardTitle className="mb-2">Upload Payment Proof</CardTitle>
+          <Text className="text-sm text-muted-foreground mb-5">
+            Take a photo or upload an image of your bank receipt or payment slip.
+          </Text>
 
-        <View className="flex-row gap-3 mb-4">
-          <Button variant="outline" onPress={() => pickImage(true)} className="flex-1">
-            <View className="flex-row items-center gap-2">
-              <Camera size={18} color="#111827" />
-              <Text className="font-medium text-foreground">Camera</Text>
-            </View>
-          </Button>
-          <Button variant="outline" onPress={() => pickImage(false)} className="flex-1">
-            <View className="flex-row items-center gap-2">
-              <ImageIcon size={18} color="#111827" />
-              <Text className="font-medium text-foreground">Gallery</Text>
-            </View>
+          <View className="flex-row gap-3 mb-5">
+            <Button variant="outline" onPress={() => pickImage(true)} className="flex-1" size="lg">
+              <View className="flex-row items-center gap-2">
+                <Camera size={18} color="#0f172a" />
+                <Text className="font-semibold text-foreground">Camera</Text>
+              </View>
+            </Button>
+            <Button variant="outline" onPress={() => pickImage(false)} className="flex-1" size="lg">
+              <View className="flex-row items-center gap-2">
+                <ImageIcon size={18} color="#0f172a" />
+                <Text className="font-semibold text-foreground">Gallery</Text>
+              </View>
+            </Button>
+          </View>
+
+          {image && (
+            <Image source={{ uri: image.uri }} className="w-full h-64 rounded-xl bg-muted mb-5" resizeMode="cover" />
+          )}
+
+          <Button onPress={handleSubmit} loading={uploading} disabled={!image} size="lg">
+            Submit Proof
           </Button>
         </View>
-
-        {image && (
-          <Image source={{ uri: image.uri }} className="w-full h-64 rounded-xl bg-muted mb-4" resizeMode="cover" />
-        )}
-
-        <Button onPress={handleSubmit} loading={uploading} disabled={!image}>
-          Submit Proof
-        </Button>
       </ScrollView>
     </SafeAreaView>
   );

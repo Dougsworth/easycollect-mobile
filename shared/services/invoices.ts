@@ -3,15 +3,16 @@ import { createNotification } from '@/shared/services/notifications';
 import { logActivity } from '@/shared/services/activityLog';
 import type { InvoiceWithTenant } from '@/shared/types/app.types';
 
-export async function getInvoices(landlordId: string): Promise<InvoiceWithTenant[]> {
+export async function getInvoices(landlordId: string, limit = 200): Promise<InvoiceWithTenant[]> {
   const { data, error } = await supabase
     .from('invoices')
     .select(`
-      *,
+      id, invoice_number, amount, due_date, status, description, tenant_id, landlord_id, payment_token, created_at,
       tenant:tenants(first_name, last_name, unit:units(name, property:properties(name)))
     `)
     .eq('landlord_id', landlordId)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(limit);
 
   if (error) throw error;
 
@@ -34,6 +35,13 @@ export async function createInvoice(landlordId: string, invoice: {
   issue_date?: string;
   description?: string;
 }) {
+  if (invoice.amount <= 0) {
+    throw new Error('Invoice amount must be greater than zero.');
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(invoice.due_date)) {
+    throw new Error('Due date must be in YYYY-MM-DD format.');
+  }
+
   const { data, error } = await supabase
     .from('invoices')
     .insert({
@@ -67,9 +75,10 @@ export async function createInvoice(landlordId: string, invoice: {
 export async function getInvoicesForTenant(tenantId: string) {
   const { data, error } = await supabase
     .from('invoices')
-    .select('*')
+    .select('id, invoice_number, amount, due_date, status, description')
     .eq('tenant_id', tenantId)
-    .order('due_date', { ascending: false });
+    .order('due_date', { ascending: false })
+    .limit(50);
 
   if (error) throw error;
   return data ?? [];
@@ -84,22 +93,34 @@ export async function bulkCreateInvoices(landlordId: string, invoices: {
   let created = 0;
   let skipped = 0;
 
-  for (const invoice of invoices) {
-    const [year, month] = invoice.due_date.split('-').map(Number);
-    const monthStartStr = `${year}-${String(month).padStart(2, '0')}-01`;
-    const nextMonth = month === 12 ? new Date(year + 1, 0, 1) : new Date(year, month, 1);
-    const nextMonthStr = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}-01`;
-    const { data: existing } = await supabase
-      .from('invoices')
-      .select('id')
-      .eq('landlord_id', landlordId)
-      .eq('tenant_id', invoice.tenant_id)
-      .in('status', ['pending', 'overdue'])
-      .gte('due_date', monthStartStr)
-      .lt('due_date', nextMonthStr)
-      .limit(1);
+  // Batch: fetch all existing invoices for these tenants in one query
+  const tenantIds = [...new Set(invoices.map(i => i.tenant_id))];
+  const dueDates = invoices.map(i => i.due_date);
+  const minDate = dueDates.reduce((a, b) => a < b ? a : b);
+  const maxDate = dueDates.reduce((a, b) => a > b ? a : b);
 
-    if (existing && existing.length > 0) {
+  const { data: existingInvoices } = await supabase
+    .from('invoices')
+    .select('tenant_id, due_date')
+    .eq('landlord_id', landlordId)
+    .in('tenant_id', tenantIds.length > 0 ? tenantIds : ['__none__'])
+    .in('status', ['pending', 'overdue'])
+    .gte('due_date', minDate.slice(0, 7) + '-01')
+    .lte('due_date', maxDate);
+
+  // Build a set of "tenantId:YYYY-MM" for quick lookup
+  const existingSet = new Set(
+    (existingInvoices ?? []).map((inv: any) => {
+      const month = (inv.due_date as string).slice(0, 7);
+      return `${inv.tenant_id}:${month}`;
+    })
+  );
+
+  for (const invoice of invoices) {
+    const month = invoice.due_date.slice(0, 7);
+    const key = `${invoice.tenant_id}:${month}`;
+
+    if (existingSet.has(key)) {
       skipped++;
       continue;
     }
@@ -117,6 +138,7 @@ export async function bulkCreateInvoices(landlordId: string, invoices: {
       skipped++;
     } else {
       created++;
+      existingSet.add(key); // prevent duplicate in same batch
     }
   }
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { UserPlus } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { addTenant } from '@/shared/services/tenants';
 import { getProperties } from '@/shared/services/properties';
@@ -58,33 +59,54 @@ export default function AddTenantScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background-secondary">
       <PageHeader title="Add Tenant" showBack />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
-        <ScrollView className="flex-1 px-6" keyboardShouldPersistTaps="handled">
-          <View className="flex-row gap-3">
-            <View className="flex-1">
-              <Input label="First Name" value={form.firstName} onChangeText={v => setForm(f => ({ ...f, firstName: v }))} placeholder="John" />
+        <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled" contentContainerClassName="pb-8">
+          <View
+            className="bg-white rounded-2xl p-5 mb-2"
+            style={{
+              shadowColor: '#0f172a',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.06,
+              shadowRadius: 12,
+              elevation: 3,
+            }}
+          >
+            <View className="flex-row items-center mb-5">
+              <View className="h-10 w-10 rounded-xl bg-primary-muted items-center justify-center mr-3">
+                <UserPlus size={20} color="#3b82f6" />
+              </View>
+              <View>
+                <Text className="text-base font-bold text-foreground">Tenant Details</Text>
+                <Text className="text-xs text-muted-foreground mt-0.5">Fill in the tenant's information</Text>
+              </View>
             </View>
-            <View className="flex-1">
-              <Input label="Last Name" value={form.lastName} onChangeText={v => setForm(f => ({ ...f, lastName: v }))} placeholder="Doe" />
+
+            <View className="flex-row gap-3">
+              <View className="flex-1">
+                <Input label="First Name" value={form.firstName} onChangeText={v => setForm(f => ({ ...f, firstName: v }))} placeholder="John" />
+              </View>
+              <View className="flex-1">
+                <Input label="Last Name" value={form.lastName} onChangeText={v => setForm(f => ({ ...f, lastName: v }))} placeholder="Doe" />
+              </View>
             </View>
+
+            <Input label="Email" value={form.email} onChangeText={v => setForm(f => ({ ...f, email: v }))} placeholder="tenant@email.com" keyboardType="email-address" autoCapitalize="none" />
+            <Input label="Phone" value={form.phone} onChangeText={v => setForm(f => ({ ...f, phone: v }))} placeholder="876-555-0123" keyboardType="phone-pad" />
+
+            <Select
+              label="Unit (optional)"
+              placeholder="Select a unit..."
+              options={unitOptions}
+              value={form.unit_id}
+              onValueChange={v => setForm(f => ({ ...f, unit_id: v }))}
+            />
+
+            <Button onPress={handleSubmit} loading={loading} className="mt-2" size="lg">
+              Add Tenant
+            </Button>
           </View>
-
-          <Input label="Email" value={form.email} onChangeText={v => setForm(f => ({ ...f, email: v }))} placeholder="tenant@email.com" keyboardType="email-address" autoCapitalize="none" />
-          <Input label="Phone" value={form.phone} onChangeText={v => setForm(f => ({ ...f, phone: v }))} placeholder="876-555-0123" keyboardType="phone-pad" />
-
-          <Select
-            label="Unit (optional)"
-            placeholder="Select a unit..."
-            options={unitOptions}
-            value={form.unit_id}
-            onValueChange={v => setForm(f => ({ ...f, unit_id: v }))}
-          />
-
-          <Button onPress={handleSubmit} loading={loading} className="mt-4">
-            Add Tenant
-          </Button>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

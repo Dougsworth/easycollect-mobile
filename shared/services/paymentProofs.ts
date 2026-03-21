@@ -5,6 +5,8 @@ import { createNotification } from '@/shared/services/notifications';
 import { logActivity } from '@/shared/services/activityLog';
 import type { PaymentProofWithDetails } from '@/shared/types/app.types';
 
+const MAX_PROOF_SIZE = 10 * 1024 * 1024; // 10 MB
+
 // RN adaptation: accepts { uri, name, type } from expo-image-picker instead of File
 export async function uploadProofImage(image: { uri: string; name: string; type: string }): Promise<string> {
   const ext = image.name.split('.').pop();
@@ -12,6 +14,10 @@ export async function uploadProofImage(image: { uri: string; name: string; type:
 
   const response = await fetch(image.uri);
   const blob = await response.blob();
+
+  if (blob.size > MAX_PROOF_SIZE) {
+    throw new Error('Image is too large. Please use an image under 10 MB.');
+  }
 
   const { error } = await supabase.storage
     .from('payment-proofs')
@@ -67,7 +73,8 @@ export async function getProofsForLandlord(landlordId: string): Promise<PaymentP
       invoice:invoices(invoice_number, amount)
     `)
     .eq('landlord_id', landlordId)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(200);
 
   if (error) throw error;
 
@@ -102,17 +109,36 @@ export async function approveProof(
   tenantId: string,
   amount: number,
 ) {
-  const { error } = await supabase
+  // Idempotency: only approve if status is currently 'pending'
+  const { data: updated, error } = await supabase
     .from('payment_proofs')
     .update({ status: 'approved' })
-    .eq('id', proofId);
+    .eq('id', proofId)
+    .eq('status', 'pending')
+    .select('id')
+    .single();
 
-  if (error) throw error;
+  if (error || !updated) {
+    throw new Error('This proof has already been reviewed or no longer exists.');
+  }
+
+  // Re-verify the invoice amount from the database to prevent UI tampering
+  const { data: invoice } = await supabase
+    .from('invoices')
+    .select('amount, status')
+    .eq('id', invoiceId)
+    .single();
+
+  if (invoice?.status === 'paid') {
+    throw new Error('This invoice has already been paid.');
+  }
+
+  const verifiedAmount = invoice?.amount ?? amount;
 
   const payment = await createPayment(landlordId, {
     tenant_id: tenantId,
     invoice_id: invoiceId,
-    amount,
+    amount: verifiedAmount,
     method: 'bank_transfer',
     notes: 'Approved from payment proof',
   });
@@ -121,10 +147,10 @@ export async function approveProof(
     landlordId,
     'proof_approved',
     'Payment Proof Approved',
-    `Payment proof approved — J$${amount.toLocaleString()} recorded`,
+    `Payment proof approved — J$${verifiedAmount.toLocaleString()} recorded`,
     proofId,
   );
-  logActivity(landlordId, 'proof_approved', 'proof', `Approved payment proof and created payment of J$${amount.toLocaleString()}`, proofId, { amount, invoice_id: invoiceId });
+  logActivity(landlordId, 'proof_approved', 'proof', `Approved payment proof and created payment of J$${verifiedAmount.toLocaleString()}`, proofId, { amount: verifiedAmount, invoice_id: invoiceId });
 
   const paymentId = (payment as any).id;
   supabase.functions.invoke('send-receipt', {
@@ -135,12 +161,18 @@ export async function approveProof(
 }
 
 export async function rejectProof(proofId: string, landlordId: string, note?: string) {
-  const { error } = await supabase
+  // Idempotency: only reject if status is currently 'pending'
+  const { data: updated, error } = await supabase
     .from('payment_proofs')
     .update({ status: 'rejected', reviewer_note: note ?? '' })
-    .eq('id', proofId);
+    .eq('id', proofId)
+    .eq('status', 'pending')
+    .select('id')
+    .single();
 
-  if (error) throw error;
+  if (error || !updated) {
+    throw new Error('This proof has already been reviewed or no longer exists.');
+  }
 
   createNotification(
     landlordId,

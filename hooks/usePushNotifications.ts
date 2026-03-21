@@ -9,6 +9,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -23,7 +25,6 @@ export function usePushNotifications(userId: string | undefined) {
     registerForPushNotificationsAsync().then(token => {
       if (token) {
         setExpoPushToken(token);
-        // Store push token in profile
         supabase
           .from('profiles')
           .update({ expo_push_token: token } as any)
@@ -35,21 +36,19 @@ export function usePushNotifications(userId: string | undefined) {
     });
 
     notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-      // Handle foreground notification
       console.log('Notification received:', notification);
     });
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-      // Handle notification tap
       console.log('Notification tapped:', response);
     });
 
     return () => {
       if (notificationListener.current) {
-        Notifications.removeNotificationSubscription(notificationListener.current);
+        notificationListener.current.remove();
       }
       if (responseListener.current) {
-        Notifications.removeNotificationSubscription(responseListener.current);
+        responseListener.current.remove();
       }
     };
   }, [userId]);

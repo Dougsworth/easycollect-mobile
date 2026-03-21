@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 import { cn } from '@/lib/utils';
+import { s } from '@/lib/responsive';
 
 interface ProgressBarProps {
   progress: number; // 0-100
@@ -17,7 +18,7 @@ const colorStyles = {
 export function ProgressBar({ progress, color = 'primary', className }: ProgressBarProps) {
   const clamped = Math.max(0, Math.min(100, progress));
   return (
-    <View className={cn('h-2 rounded-full bg-muted overflow-hidden', className)}>
+    <View className={cn('rounded-full bg-muted overflow-hidden', className)} style={{ height: s(7) }}>
       <View
         className={cn('h-full rounded-full', colorStyles[color])}
         style={{ width: `${clamped}%` }}

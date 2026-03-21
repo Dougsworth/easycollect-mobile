@@ -1,5 +1,6 @@
 import { View, Text } from 'react-native';
 import { cn } from '@/lib/utils';
+import { s, ms } from '@/lib/responsive';
 
 interface AvatarInitialProps {
   name: string;
@@ -7,16 +8,16 @@ interface AvatarInitialProps {
   className?: string;
 }
 
-const sizeStyles = {
-  sm: 'h-8 w-8',
-  md: 'h-10 w-10',
-  lg: 'h-12 w-12',
+const dimensions = {
+  sm: s(30),
+  md: s(38),
+  lg: s(46),
 };
 
-const textSizeStyles = {
-  sm: 'text-xs',
-  md: 'text-sm',
-  lg: 'text-base',
+const fontSizes = {
+  sm: ms(11),
+  md: ms(13),
+  lg: ms(15),
 };
 
 const colors = [
@@ -40,9 +41,14 @@ export function AvatarInitial({ name, size = 'md', className }: AvatarInitialPro
     .join('')
     .toUpperCase();
 
+  const d = dimensions[size];
+
   return (
-    <View className={cn('rounded-full items-center justify-center', sizeStyles[size], getColor(name), className)}>
-      <Text className={cn('font-semibold text-white', textSizeStyles[size])}>{initials}</Text>
+    <View
+      className={cn('rounded-full items-center justify-center', getColor(name), className)}
+      style={{ width: d, height: d }}
+    >
+      <Text style={{ fontSize: fontSizes[size] }} className="font-semibold text-white">{initials}</Text>
     </View>
   );
 }

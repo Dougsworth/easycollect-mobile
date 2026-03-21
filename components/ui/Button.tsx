@@ -1,6 +1,7 @@
-import { Pressable, Text, ActivityIndicator } from 'react-native';
+import { Pressable, Text, ActivityIndicator, type ViewStyle } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { cn } from '@/lib/utils';
+import { s, ms } from '@/lib/responsive';
 
 interface ButtonProps {
   onPress?: () => void;
@@ -15,7 +16,7 @@ interface ButtonProps {
 const variantStyles = {
   default: 'bg-primary',
   destructive: 'bg-destructive',
-  outline: 'border border-border bg-transparent',
+  outline: 'border border-border bg-white',
   ghost: 'bg-transparent',
   secondary: 'bg-secondary',
 };
@@ -28,10 +29,21 @@ const variantTextStyles = {
   secondary: 'text-foreground',
 };
 
-const sizeStyles = {
-  default: 'h-12 px-5',
-  sm: 'h-9 px-3',
-  lg: 'h-14 px-8',
+const shadowStyles: Record<string, ViewStyle> = {
+  default: {
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  destructive: {
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
 };
 
 export function Button({
@@ -48,18 +60,23 @@ export function Button({
     onPress?.();
   };
 
+  const heights = { sm: s(36), default: s(46), lg: s(52) };
+  const paddings = { sm: s(12), default: s(20), lg: s(30) };
+
   return (
     <Pressable
       onPress={handlePress}
       disabled={disabled || loading}
-      style={({ pressed }) => ({
+      style={({ pressed }: { pressed: boolean }) => ({
         opacity: disabled || loading ? 0.5 : pressed ? 0.85 : 1,
         transform: [{ scale: pressed && !disabled ? 0.97 : 1 }],
+        height: heights[size],
+        paddingHorizontal: paddings[size],
+        ...(shadowStyles[variant] ?? {}),
       })}
       className={cn(
         'flex-row items-center justify-center rounded-xl',
         variantStyles[variant],
-        sizeStyles[size],
         className,
       )}
       android_ripple={
@@ -71,7 +88,7 @@ export function Button({
       {loading ? (
         <ActivityIndicator size="small" color={variant === 'default' || variant === 'destructive' ? '#fff' : '#3b82f6'} />
       ) : typeof children === 'string' ? (
-        <Text className={cn('text-base font-semibold', variantTextStyles[variant])}>{children}</Text>
+        <Text style={{ fontSize: ms(15) }} className={cn('font-semibold', variantTextStyles[variant])}>{children}</Text>
       ) : (
         children
       )}

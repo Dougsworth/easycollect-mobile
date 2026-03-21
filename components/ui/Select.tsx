@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, Pressable, Modal, FlatList, SafeAreaView } from 'react-native';
 import { ChevronDown, Check } from 'lucide-react-native';
 import { cn } from '@/lib/utils';
+import { s, ms } from '@/lib/responsive';
 
 interface SelectOption {
   label: string;
@@ -24,26 +25,27 @@ export function Select({ label, placeholder = 'Select...', options, value, onVal
 
   return (
     <View className={cn('mb-4', className)}>
-      {label && <Text className="mb-1.5 text-sm font-medium text-foreground">{label}</Text>}
+      {label && <Text style={{ fontSize: ms(13), marginBottom: s(6) }} className="font-semibold text-foreground">{label}</Text>}
       <Pressable
         onPress={() => setOpen(true)}
         className={cn(
-          'h-12 rounded-xl border bg-white px-4 flex-row items-center justify-between',
+          'rounded-xl border bg-white flex-row items-center justify-between',
           error ? 'border-destructive' : 'border-border',
         )}
+        style={{ height: s(46), paddingHorizontal: s(16) }}
       >
-        <Text className={selectedOption ? 'text-foreground text-base' : 'text-gray-400 text-base'}>
+        <Text style={{ fontSize: ms(15) }} className={selectedOption ? 'text-foreground' : 'text-gray-400'}>
           {selectedOption?.label ?? placeholder}
         </Text>
-        <ChevronDown size={18} color="#9ca3af" />
+        <ChevronDown size={s(16)} color="#9ca3af" />
       </Pressable>
-      {error && <Text className="mt-1 text-sm text-destructive">{error}</Text>}
+      {error && <Text style={{ fontSize: ms(13), marginTop: s(4) }} className="text-destructive">{error}</Text>}
 
       <Modal visible={open} transparent animationType="slide">
         <Pressable className="flex-1 bg-black/30" onPress={() => setOpen(false)} />
         <SafeAreaView className="bg-white rounded-t-3xl max-h-[60%]">
-          <View className="p-4 border-b border-border">
-            <Text className="text-lg font-semibold text-foreground">{label ?? 'Select'}</Text>
+          <View style={{ padding: s(16) }} className="border-b border-border">
+            <Text style={{ fontSize: ms(17) }} className="font-semibold text-foreground">{label ?? 'Select'}</Text>
           </View>
           <FlatList
             data={options}
@@ -51,10 +53,11 @@ export function Select({ label, placeholder = 'Select...', options, value, onVal
             renderItem={({ item }) => (
               <Pressable
                 onPress={() => { onValueChange(item.value); setOpen(false); }}
-                className="flex-row items-center justify-between px-4 py-3.5 border-b border-border/50"
+                className="flex-row items-center justify-between border-b border-border/50"
+                style={{ paddingHorizontal: s(16), paddingVertical: s(14) }}
               >
-                <Text className="text-base text-foreground">{item.label}</Text>
-                {item.value === value && <Check size={18} color="#3b82f6" />}
+                <Text style={{ fontSize: ms(15) }} className="text-foreground">{item.label}</Text>
+                {item.value === value && <Check size={s(16)} color="#3b82f6" />}
               </Pressable>
             )}
           />

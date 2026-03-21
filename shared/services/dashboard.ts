@@ -2,37 +2,40 @@ import { supabase } from '@/lib/supabase';
 import type { DashboardStats, PaymentWithDetails } from '@/shared/types/app.types';
 
 export async function getDashboardStats(landlordId: string): Promise<DashboardStats> {
-  const { count: tenantCount } = await supabase
-    .from('tenants')
-    .select('*', { count: 'exact', head: true })
-    .eq('landlord_id', landlordId)
-    .eq('status', 'active');
-
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
 
-  const { data: invoiceData } = await supabase
-    .from('invoices')
-    .select('amount, status')
-    .eq('landlord_id', landlordId)
-    .gte('due_date', monthStart)
-    .lte('due_date', monthEnd);
+  // Run both queries in parallel instead of sequentially
+  const [tenantResult, invoiceResult] = await Promise.all([
+    supabase
+      .from('tenants')
+      .select('id', { count: 'exact', head: true })
+      .eq('landlord_id', landlordId)
+      .eq('status', 'active'),
+    supabase
+      .from('invoices')
+      .select('amount, status')
+      .eq('landlord_id', landlordId)
+      .gte('due_date', monthStart)
+      .lte('due_date', monthEnd),
+  ]);
 
-  const invoices = (invoiceData ?? []) as { amount: number; status: string }[];
+  const tenantCount = tenantResult.count ?? 0;
+  const invoices = (invoiceResult.data ?? []) as { amount: number; status: string }[];
   const expected = invoices.reduce((sum, inv) => sum + inv.amount, 0);
   const collected = invoices.filter(i => i.status === 'paid').reduce((sum, inv) => sum + inv.amount, 0);
   const outstanding = expected - collected;
   const overdue = invoices.filter(i => i.status === 'overdue').length;
 
-  return { expected, collected, outstanding, overdue, tenantCount: tenantCount ?? 0 };
+  return { expected, collected, outstanding, overdue, tenantCount };
 }
 
 export async function getRecentPayments(landlordId: string, limit = 5): Promise<PaymentWithDetails[]> {
   const { data, error } = await supabase
     .from('payments')
     .select(`
-      *,
+      id, amount, payment_date, method, payment_number, tenant_id, invoice_id, landlord_id, created_at,
       tenant:tenants(first_name, last_name, unit:units(name, property:properties(name))),
       invoice:invoices(invoice_number)
     `)
@@ -60,12 +63,13 @@ export async function getOverdueTenants(landlordId: string) {
   const { data, error } = await supabase
     .from('invoices')
     .select(`
-      *,
+      id, amount, due_date, tenant_id,
       tenant:tenants(first_name, last_name, unit:units(name))
     `)
     .eq('landlord_id', landlordId)
     .eq('status', 'overdue')
-    .order('due_date', { ascending: true });
+    .order('due_date', { ascending: true })
+    .limit(20);
 
   if (error) throw error;
 

@@ -18,7 +18,7 @@ export default function TenantDetailScreen() {
   const { user } = useAuth();
   const router = useRouter();
   const [tenant, setTenant] = useState<TenantWithDetails | null>(null);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -61,7 +61,7 @@ export default function TenantDetailScreen() {
 
   if (!tenant && !loading) {
     return (
-      <SafeAreaView className="flex-1 bg-white items-center justify-center">
+      <SafeAreaView className="flex-1 bg-background-secondary items-center justify-center">
         <Text className="text-muted-foreground">Tenant not found</Text>
       </SafeAreaView>
     );
@@ -70,40 +70,48 @@ export default function TenantDetailScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background-secondary">
       <PageHeader title="Tenant Details" showBack />
-      <ScrollView className="flex-1" contentContainerClassName="px-4 pb-6">
+      <ScrollView className="flex-1" contentContainerClassName="px-5 pb-6">
         {tenant && (
           <>
-            {/* Profile */}
+            {/* Profile Card */}
             <Card className="mb-4 items-center">
               <AvatarInitial name={`${tenant.first_name} ${tenant.last_name}`} size="lg" />
-              <Text className="text-xl font-bold text-foreground mt-3">
+              <Text className="text-xl font-bold text-foreground mt-3 tracking-tight">
                 {tenant.first_name} {tenant.last_name}
               </Text>
               <StatusBadge status={tenant.status} className="mt-2" />
 
-              <View className="w-full mt-4 gap-2">
+              <View className="w-full mt-5 gap-3">
                 {tenant.email ? (
-                  <View className="flex-row items-center gap-2">
-                    <Mail size={16} color="#6b7280" />
-                    <Text className="text-sm text-muted-foreground">{tenant.email}</Text>
+                  <View className="flex-row items-center gap-3">
+                    <View className="h-9 w-9 rounded-xl bg-primary-muted items-center justify-center">
+                      <Mail size={16} color="#3b82f6" />
+                    </View>
+                    <Text className="text-sm text-foreground">{tenant.email}</Text>
                   </View>
                 ) : null}
                 {tenant.phone ? (
-                  <View className="flex-row items-center gap-2">
-                    <Phone size={16} color="#6b7280" />
-                    <Text className="text-sm text-muted-foreground">{tenant.phone}</Text>
+                  <View className="flex-row items-center gap-3">
+                    <View className="h-9 w-9 rounded-xl bg-success-muted items-center justify-center">
+                      <Phone size={16} color="#10b981" />
+                    </View>
+                    <Text className="text-sm text-foreground">{tenant.phone}</Text>
                   </View>
                 ) : null}
-                <View className="flex-row items-center gap-2">
-                  <Home size={16} color="#6b7280" />
-                  <Text className="text-sm text-muted-foreground">
+                <View className="flex-row items-center gap-3">
+                  <View className="h-9 w-9 rounded-xl bg-warning-muted items-center justify-center">
+                    <Home size={16} color="#f59e0b" />
+                  </View>
+                  <Text className="text-sm text-foreground">
                     {tenant.property_name}{tenant.unit_name ? ` — ${tenant.unit_name}` : ' — Unassigned'}
                   </Text>
                 </View>
                 {tenant.lease_start && (
-                  <View className="flex-row items-center gap-2">
-                    <Calendar size={16} color="#6b7280" />
-                    <Text className="text-sm text-muted-foreground">
+                  <View className="flex-row items-center gap-3">
+                    <View className="h-9 w-9 rounded-xl bg-muted items-center justify-center">
+                      <Calendar size={16} color="#64748b" />
+                    </View>
+                    <Text className="text-sm text-foreground">
                       {formatDate(tenant.lease_start)}{tenant.lease_end ? ` to ${formatDate(tenant.lease_end)}` : ''}
                     </Text>
                   </View>
@@ -113,39 +121,49 @@ export default function TenantDetailScreen() {
 
             {/* Invoices */}
             <Card className="mb-4">
-              <CardTitle className="mb-3">Invoices ({invoices.length})</CardTitle>
-              {invoices.slice(0, 5).map((inv) => (
-                <View key={inv.id} className="flex-row items-center justify-between py-2 border-b border-border/50">
+              <View className="flex-row items-center justify-between mb-4">
+                <CardTitle>Invoices</CardTitle>
+                <View className="bg-muted rounded-full px-2.5 py-0.5">
+                  <Text className="text-xs font-bold text-muted-foreground">{invoices.length}</Text>
+                </View>
+              </View>
+              {invoices.slice(0, 5).map((inv, idx) => (
+                <View key={inv.id} className={`flex-row items-center justify-between py-3 ${idx < Math.min(invoices.length, 5) - 1 ? 'border-b border-border/30' : ''}`}>
                   <View>
-                    <Text className="text-sm font-medium text-foreground">{inv.invoice_number}</Text>
-                    <Text className="text-xs text-muted-foreground">Due {formatDate(inv.due_date)}</Text>
+                    <Text className="text-sm font-semibold text-foreground">{inv.invoice_number}</Text>
+                    <Text className="text-xs text-muted-foreground mt-0.5">Due {formatDate(inv.due_date)}</Text>
                   </View>
                   <View className="items-end">
-                    <Text className="text-sm font-semibold">J${inv.amount.toLocaleString()}</Text>
-                    <StatusBadge status={inv.status} />
+                    <Text className="text-sm font-bold">J${inv.amount.toLocaleString()}</Text>
+                    <StatusBadge status={inv.status} className="mt-1" />
                   </View>
                 </View>
               ))}
-              {invoices.length === 0 && <Text className="text-sm text-muted-foreground">No invoices</Text>}
+              {invoices.length === 0 && <Text className="text-sm text-muted-foreground py-2">No invoices</Text>}
             </Card>
 
             {/* Payments */}
             <Card className="mb-4">
-              <CardTitle className="mb-3">Payments ({payments.length})</CardTitle>
-              {payments.slice(0, 5).map((p: any) => (
-                <View key={p.id} className="flex-row items-center justify-between py-2 border-b border-border/50">
+              <View className="flex-row items-center justify-between mb-4">
+                <CardTitle>Payments</CardTitle>
+                <View className="bg-muted rounded-full px-2.5 py-0.5">
+                  <Text className="text-xs font-bold text-muted-foreground">{payments.length}</Text>
+                </View>
+              </View>
+              {payments.slice(0, 5).map((p: any, idx: number) => (
+                <View key={p.id} className={`flex-row items-center justify-between py-3 ${idx < Math.min(payments.length, 5) - 1 ? 'border-b border-border/30' : ''}`}>
                   <View>
-                    <Text className="text-sm font-medium text-foreground">{p.method}</Text>
-                    <Text className="text-xs text-muted-foreground">{formatDate(p.payment_date)}</Text>
+                    <Text className="text-sm font-semibold text-foreground">{p.method}</Text>
+                    <Text className="text-xs text-muted-foreground mt-0.5">{formatDate(p.payment_date)}</Text>
                   </View>
-                  <Text className="text-sm font-semibold text-success">J${p.amount.toLocaleString()}</Text>
+                  <Text className="text-sm font-bold text-success">J${p.amount.toLocaleString()}</Text>
                 </View>
               ))}
-              {payments.length === 0 && <Text className="text-sm text-muted-foreground">No payments</Text>}
+              {payments.length === 0 && <Text className="text-sm text-muted-foreground py-2">No payments</Text>}
             </Card>
 
             {/* Delete */}
-            <Button variant="destructive" onPress={handleDelete} className="mt-2">
+            <Button variant="destructive" onPress={handleDelete} size="lg">
               <View className="flex-row items-center gap-2">
                 <Trash2 size={16} color="#fff" />
                 <Text className="text-white font-semibold">Delete Tenant</Text>

@@ -44,22 +44,32 @@ export default function ActivityLogScreen() {
       <PageHeader title="Activity Log" showBack />
       <FilterTabs tabs={entityTypes} activeTab={filter} onTabChange={setFilter} />
       {loading ? (
-        <View className="px-4 gap-3">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-14 w-full" />)}</View>
+        <View className="px-5 gap-3">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-16 w-full" />)}</View>
       ) : logs.length === 0 ? (
-        <EmptyState icon={<Clock size={40} color="#9ca3af" />} title="No activity" description="Actions will appear here" />
+        <EmptyState icon={<Clock size={40} color="#94a3b8" />} title="No activity" description="Actions will appear here" />
       ) : (
         <FlatList
           data={logs}
           keyExtractor={l => l.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#3b82f6" />}
+          contentContainerClassName="px-5 pb-4"
           renderItem={({ item }) => (
-            <View className="flex-row px-4 py-3 bg-white border-b border-border/50">
-              <View className="h-8 w-8 rounded-full bg-muted items-center justify-center mr-3 mt-0.5">
-                <Clock size={14} color="#6b7280" />
+            <View
+              className="flex-row mb-3 p-4 bg-white rounded-2xl"
+              style={{
+                shadowColor: '#0f172a',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.04,
+                shadowRadius: 6,
+                elevation: 1,
+              }}
+            >
+              <View className="h-9 w-9 rounded-xl bg-muted items-center justify-center mr-3">
+                <Clock size={16} color="#64748b" />
               </View>
               <View className="flex-1">
-                <Text className="text-sm text-foreground">{item.description}</Text>
-                <Text className="text-xs text-muted-foreground mt-0.5">{formatDate(item.created_at)}</Text>
+                <Text className="text-sm font-medium text-foreground">{item.description}</Text>
+                <Text className="text-xs text-muted-foreground mt-1">{formatDate(item.created_at)}</Text>
               </View>
             </View>
           )}

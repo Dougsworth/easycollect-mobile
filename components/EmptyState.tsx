@@ -1,5 +1,6 @@
 import { View, Text } from 'react-native';
 import { Button } from '@/components/ui';
+import { s, ms } from '@/lib/responsive';
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -11,14 +12,21 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon, title, description, actionLabel, onAction }: EmptyStateProps) {
   return (
-    <View className="flex-1 items-center justify-center px-8 py-16">
-      {icon && <View className="mb-4">{icon}</View>}
-      <Text className="text-lg font-semibold text-foreground text-center">{title}</Text>
+    <View className="flex-1 items-center justify-center" style={{ paddingHorizontal: s(32), paddingVertical: s(60) }}>
+      {icon && (
+        <View
+          className="rounded-full bg-muted items-center justify-center"
+          style={{ height: s(64), width: s(64), marginBottom: s(18) }}
+        >
+          {icon}
+        </View>
+      )}
+      <Text style={{ fontSize: ms(17) }} className="font-bold text-foreground text-center tracking-tight">{title}</Text>
       {description && (
-        <Text className="text-sm text-muted-foreground text-center mt-2">{description}</Text>
+        <Text style={{ fontSize: ms(13), marginTop: s(8), lineHeight: ms(19) }} className="text-muted-foreground text-center">{description}</Text>
       )}
       {actionLabel && onAction && (
-        <Button onPress={onAction} className="mt-5">{actionLabel}</Button>
+        <Button onPress={onAction} className="mt-6" size="lg">{actionLabel}</Button>
       )}
     </View>
   );

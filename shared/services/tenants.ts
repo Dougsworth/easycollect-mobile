@@ -7,11 +7,12 @@ export async function getTenants(landlordId: string): Promise<TenantWithDetails[
   const { data, error } = await supabase
     .from('tenants')
     .select(`
-      *,
+      id, first_name, last_name, email, phone, status, unit_id, lease_start, lease_end, landlord_id, profile_id, created_at,
       unit:units(name, rent_amount, property:properties(name))
     `)
     .eq('landlord_id', landlordId)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(500);
 
   if (error) throw error;
 
@@ -117,16 +118,17 @@ export async function updateTenant(tenantId: string, updates: {
 }
 
 export async function deleteTenant(tenantId: string) {
-  await supabase
-    .from('payment_proofs')
-    .delete()
-    .eq('tenant_id', tenantId);
-
+  // Fetch tenant info first, before any deletions
   const { data: tenantInfo } = await supabase
     .from('tenants')
     .select('landlord_id, first_name, last_name')
     .eq('id', tenantId)
     .single();
+
+  await supabase
+    .from('payment_proofs')
+    .delete()
+    .eq('tenant_id', tenantId);
 
   const { error } = await supabase
     .from('tenants')

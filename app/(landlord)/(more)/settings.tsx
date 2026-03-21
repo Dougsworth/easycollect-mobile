@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { User, Building2, Landmark, Bell as BellIcon } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateProfile, updateCompanyInfo, updateBankDetails, updateNotificationPreferences } from '@/shared/services/profile';
 import { getLateFeeSettings, upsertLateFeeSettings } from '@/shared/services/lateFees';
@@ -8,17 +9,21 @@ import { getRecurringInvoiceSettings, upsertRecurringInvoiceSettings } from '@/s
 import { Card, CardTitle, Input, Button, Switch, Select } from '@/components/ui';
 import { PageHeader } from '@/components/PageHeader';
 
+function SectionIcon({ icon: Icon, color }: { icon: any; color: string }) {
+  return (
+    <View className="h-8 w-8 rounded-lg items-center justify-center mr-2" style={{ backgroundColor: color + '15' }}>
+      <Icon size={16} color={color} />
+    </View>
+  );
+}
+
 export default function SettingsScreen() {
   const { user, profile, refreshProfile } = useAuth();
   const [saving, setSaving] = useState('');
 
-  // Profile
   const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', email: '', phone: '' });
-  // Company
   const [companyForm, setCompanyForm] = useState({ name: '', address: '', city: '', country: '' });
-  // Bank
   const [bankForm, setBankForm] = useState({ bankName: '', accountName: '', accountNumber: '', branch: '' });
-  // Notifications
   const [notifPrefs, setNotifPrefs] = useState({ payments: true, overdue: true, invoices: true, auto_remind: false });
 
   useEffect(() => {
@@ -42,10 +47,13 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background-secondary">
       <PageHeader title="Settings" showBack />
-      <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
+      <ScrollView className="flex-1 px-5" contentContainerClassName="pb-8">
         {/* Profile */}
         <Card className="mb-4">
-          <CardTitle className="mb-3">Profile</CardTitle>
+          <View className="flex-row items-center mb-4">
+            <SectionIcon icon={User} color="#3b82f6" />
+            <CardTitle>Profile</CardTitle>
+          </View>
           <View className="flex-row gap-3">
             <View className="flex-1"><Input label="First Name" value={profileForm.firstName} onChangeText={v => setProfileForm(f => ({ ...f, firstName: v }))} /></View>
             <View className="flex-1"><Input label="Last Name" value={profileForm.lastName} onChangeText={v => setProfileForm(f => ({ ...f, lastName: v }))} /></View>
@@ -56,7 +64,10 @@ export default function SettingsScreen() {
 
         {/* Company */}
         <Card className="mb-4">
-          <CardTitle className="mb-3">Company Info</CardTitle>
+          <View className="flex-row items-center mb-4">
+            <SectionIcon icon={Building2} color="#10b981" />
+            <CardTitle>Company Info</CardTitle>
+          </View>
           <Input label="Company Name" value={companyForm.name} onChangeText={v => setCompanyForm(f => ({ ...f, name: v }))} />
           <Input label="Address" value={companyForm.address} onChangeText={v => setCompanyForm(f => ({ ...f, address: v }))} />
           <View className="flex-row gap-3">
@@ -68,7 +79,10 @@ export default function SettingsScreen() {
 
         {/* Bank Details */}
         <Card className="mb-4">
-          <CardTitle className="mb-3">Bank Details</CardTitle>
+          <View className="flex-row items-center mb-4">
+            <SectionIcon icon={Landmark} color="#f59e0b" />
+            <CardTitle>Bank Details</CardTitle>
+          </View>
           <Input label="Bank Name" value={bankForm.bankName} onChangeText={v => setBankForm(f => ({ ...f, bankName: v }))} />
           <Input label="Account Name" value={bankForm.accountName} onChangeText={v => setBankForm(f => ({ ...f, accountName: v }))} />
           <Input label="Account Number" value={bankForm.accountNumber} onChangeText={v => setBankForm(f => ({ ...f, accountNumber: v }))} />
@@ -78,7 +92,10 @@ export default function SettingsScreen() {
 
         {/* Notification Prefs */}
         <Card className="mb-4">
-          <CardTitle className="mb-3">Notifications</CardTitle>
+          <View className="flex-row items-center mb-4">
+            <SectionIcon icon={BellIcon} color="#8b5cf6" />
+            <CardTitle>Notifications</CardTitle>
+          </View>
           <Switch label="Payment notifications" value={notifPrefs.payments} onValueChange={v => setNotifPrefs(p => ({ ...p, payments: v }))} />
           <Switch label="Overdue alerts" value={notifPrefs.overdue} onValueChange={v => setNotifPrefs(p => ({ ...p, overdue: v }))} />
           <Switch label="Invoice notifications" value={notifPrefs.invoices} onValueChange={v => setNotifPrefs(p => ({ ...p, invoices: v }))} />

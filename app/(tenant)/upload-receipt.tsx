@@ -81,47 +81,60 @@ export default function UploadOldReceiptScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background-secondary">
       <PageHeader title="Upload Old Receipt" showBack />
-      <ScrollView className="flex-1 px-6">
-        <Text className="text-sm text-muted-foreground mb-4">
-          Upload a receipt for a past payment. Select the invoice it belongs to and attach the receipt image.
-        </Text>
+      <ScrollView className="flex-1 px-5" contentContainerClassName="pb-8">
+        <View
+          className="bg-white rounded-2xl p-5"
+          style={{
+            borderWidth: 1,
+            borderColor: 'rgba(226,232,240,0.6)',
+            shadowColor: '#0f172a',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.04,
+            shadowRadius: 8,
+            elevation: 2,
+          }}
+        >
+          <Text className="text-sm text-muted-foreground mb-5">
+            Upload a receipt for a past payment. Select the invoice it belongs to and attach the receipt image.
+          </Text>
 
-        <Select
-          label="Invoice"
-          placeholder="Select an invoice..."
-          options={invoiceOptions}
-          value={selectedInvoice}
-          onValueChange={setSelectedInvoice}
-        />
+          <Select
+            label="Invoice"
+            placeholder="Select an invoice..."
+            options={invoiceOptions}
+            value={selectedInvoice}
+            onValueChange={setSelectedInvoice}
+          />
 
-        <CardTitle className="mb-3">Receipt Image</CardTitle>
-        <View className="flex-row gap-3 mb-4">
-          <Button variant="outline" onPress={() => pickImage(true)} className="flex-1">
+          <CardTitle className="mb-3">Receipt Image</CardTitle>
+          <View className="flex-row gap-3 mb-5">
+            <Button variant="outline" onPress={() => pickImage(true)} className="flex-1" size="lg">
+              <View className="flex-row items-center gap-2">
+                <Camera size={18} color="#0f172a" />
+                <Text className="font-semibold text-foreground">Camera</Text>
+              </View>
+            </Button>
+            <Button variant="outline" onPress={() => pickImage(false)} className="flex-1" size="lg">
+              <View className="flex-row items-center gap-2">
+                <ImageIcon size={18} color="#0f172a" />
+                <Text className="font-semibold text-foreground">Gallery</Text>
+              </View>
+            </Button>
+          </View>
+
+          {image && (
+            <Image source={{ uri: image.uri }} className="w-full h-64 rounded-xl bg-muted mb-5" resizeMode="cover" />
+          )}
+
+          <Button onPress={handleSubmit} loading={uploading} disabled={!image || !selectedInvoice} size="lg">
             <View className="flex-row items-center gap-2">
-              <Camera size={18} color="#111827" />
-              <Text className="font-medium text-foreground">Camera</Text>
-            </View>
-          </Button>
-          <Button variant="outline" onPress={() => pickImage(false)} className="flex-1">
-            <View className="flex-row items-center gap-2">
-              <ImageIcon size={18} color="#111827" />
-              <Text className="font-medium text-foreground">Gallery</Text>
+              <Upload size={18} color="#fff" />
+              <Text className="text-white font-semibold">Submit Receipt</Text>
             </View>
           </Button>
         </View>
-
-        {image && (
-          <Image source={{ uri: image.uri }} className="w-full h-64 rounded-xl bg-muted mb-4" resizeMode="cover" />
-        )}
-
-        <Button onPress={handleSubmit} loading={uploading} disabled={!image || !selectedInvoice}>
-          <View className="flex-row items-center gap-2">
-            <Upload size={18} color="#fff" />
-            <Text className="text-white font-semibold">Submit Receipt</Text>
-          </View>
-        </Button>
       </ScrollView>
     </SafeAreaView>
   );

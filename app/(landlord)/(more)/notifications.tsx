@@ -66,29 +66,62 @@ export default function NotificationsScreen() {
         showBack
         right={
           <View className="flex-row gap-2">
-            <Pressable onPress={handleMarkAllRead} className="p-2"><CheckCheck size={20} color="#3b82f6" /></Pressable>
-            <Pressable onPress={handleClearAll} className="p-2"><Trash2 size={20} color="#ef4444" /></Pressable>
+            <Pressable
+              onPress={handleMarkAllRead}
+              className="h-10 w-10 rounded-full bg-white items-center justify-center"
+              style={{
+                shadowColor: '#0f172a',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.06,
+                shadowRadius: 4,
+                elevation: 2,
+              }}
+            >
+              <CheckCheck size={18} color="#3b82f6" />
+            </Pressable>
+            <Pressable
+              onPress={handleClearAll}
+              className="h-10 w-10 rounded-full bg-white items-center justify-center"
+              style={{
+                shadowColor: '#0f172a',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.06,
+                shadowRadius: 4,
+                elevation: 2,
+              }}
+            >
+              <Trash2 size={18} color="#ef4444" />
+            </Pressable>
           </View>
         }
       />
       {loading ? (
-        <View className="px-4 gap-3">{[1,2,3,4].map(i => <Skeleton key={i} className="h-16 w-full" />)}</View>
+        <View className="px-5 gap-3">{[1,2,3,4].map(i => <Skeleton key={i} className="h-20 w-full" />)}</View>
       ) : notifications.length === 0 ? (
-        <EmptyState icon={<Bell size={40} color="#9ca3af" />} title="No notifications" description="You're all caught up!" />
+        <EmptyState icon={<Bell size={40} color="#94a3b8" />} title="No notifications" description="You're all caught up!" />
       ) : (
         <FlatList
           data={notifications}
           keyExtractor={n => n.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#3b82f6" />}
+          contentContainerClassName="px-5 pb-4"
           renderItem={({ item }) => (
             <Pressable
               onPress={() => handleTap(item)}
               onLongPress={() => handleDelete(item.id)}
-              className={`px-4 py-3 border-b border-border/50 ${item.is_read ? 'bg-white' : 'bg-primary-muted/30'}`}
+              className={`mb-3 p-4 rounded-2xl ${item.is_read ? 'bg-white' : 'bg-primary-muted'}`}
+              style={{
+                shadowColor: '#0f172a',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.04,
+                shadowRadius: 6,
+                elevation: item.is_read ? 1 : 2,
+              }}
             >
-              <Text className="text-sm font-medium text-foreground">{item.title}</Text>
-              <Text className="text-xs text-muted-foreground mt-0.5">{item.message}</Text>
-              <Text className="text-xs text-muted-foreground mt-1">{formatDate(item.created_at)}</Text>
+              {!item.is_read && <View className="h-2 w-2 rounded-full bg-primary absolute top-4 right-4" />}
+              <Text className="text-sm font-semibold text-foreground pr-4">{item.title}</Text>
+              <Text className="text-xs text-muted-foreground mt-1">{item.message}</Text>
+              <Text className="text-xs text-muted-foreground mt-1.5 font-medium">{formatDate(item.created_at)}</Text>
             </Pressable>
           )}
         />

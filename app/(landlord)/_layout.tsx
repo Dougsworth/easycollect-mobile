@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+import { View, Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { LayoutDashboard, Users, FileText, DollarSign, MoreHorizontal } from 'lucide-react-native';
 import { AiChat } from '@/components/AiChat';
@@ -9,54 +9,70 @@ export default function LandlordLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: '#3b82f6',
-          tabBarInactiveTintColor: '#9ca3af',
+          tabBarActiveTintColor: '#0f172a',
+          tabBarInactiveTintColor: '#94a3b8',
           tabBarStyle: {
-            borderTopColor: '#e5e7eb',
+            borderTopWidth: 1,
+            borderTopColor: '#e2e8f0',
             backgroundColor: '#ffffff',
-            height: 85,
-            paddingBottom: 28,
+            height: Platform.OS === 'ios' ? 85 : 65,
+            paddingBottom: Platform.OS === 'ios' ? 26 : 8,
             paddingTop: 8,
           },
           tabBarLabelStyle: {
             fontSize: 11,
             fontWeight: '600',
+            letterSpacing: 0.3,
+            marginTop: 2,
+          },
+          tabBarIconStyle: {
+            marginBottom: -2,
           },
         }}
       >
         <Tabs.Screen
           name="(dashboard)"
           options={{
-            title: 'Dashboard',
-            tabBarIcon: ({ color, size }) => <LayoutDashboard size={size} color={color} />,
+            title: 'Home',
+            tabBarIcon: ({ color, focused }) => (
+              <LayoutDashboard size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
+            ),
           }}
         />
         <Tabs.Screen
           name="(tenants)"
           options={{
             title: 'Tenants',
-            tabBarIcon: ({ color, size }) => <Users size={size} color={color} />,
+            tabBarIcon: ({ color, focused }) => (
+              <Users size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
+            ),
           }}
         />
         <Tabs.Screen
           name="(invoices)"
           options={{
             title: 'Invoices',
-            tabBarIcon: ({ color, size }) => <FileText size={size} color={color} />,
+            tabBarIcon: ({ color, focused }) => (
+              <FileText size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
+            ),
           }}
         />
         <Tabs.Screen
           name="(payments)"
           options={{
             title: 'Payments',
-            tabBarIcon: ({ color, size }) => <DollarSign size={size} color={color} />,
+            tabBarIcon: ({ color, focused }) => (
+              <DollarSign size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
+            ),
           }}
         />
         <Tabs.Screen
           name="(more)"
           options={{
             title: 'More',
-            tabBarIcon: ({ color, size }) => <MoreHorizontal size={size} color={color} />,
+            tabBarIcon: ({ color, focused }) => (
+              <MoreHorizontal size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
+            ),
           }}
         />
       </Tabs>

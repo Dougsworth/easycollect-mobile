@@ -20,7 +20,6 @@ export default function TenantHomeScreen() {
 
   const loadData = useCallback(async () => {
     if (!user) return;
-    // Find the tenant record linked to this profile
     const { data: tenant } = await supabase
       .from('tenants')
       .select('id')
@@ -48,11 +47,35 @@ export default function TenantHomeScreen() {
         subtitle="Your invoices"
         right={
           <View className="flex-row gap-2">
-            <Pressable onPress={() => router.push('/(tenant)/upload-receipt')} className="bg-primary-muted rounded-full p-2">
-              <Upload size={20} color="#3b82f6" />
+            <Pressable
+              onPress={() => router.push('/(tenant)/upload-receipt')}
+              className="bg-white rounded-full h-10 w-10 items-center justify-center"
+              style={{
+                shadowColor: '#0f172a',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.04,
+                shadowRadius: 6,
+                elevation: 1,
+                borderWidth: 1,
+                borderColor: 'rgba(226,232,240,0.6)',
+              }}
+            >
+              <Upload size={18} color="#3b82f6" />
             </Pressable>
-            <Pressable onPress={signOut} className="bg-muted rounded-full p-2">
-              <LogOut size={20} color="#6b7280" />
+            <Pressable
+              onPress={signOut}
+              className="bg-white rounded-full h-10 w-10 items-center justify-center"
+              style={{
+                shadowColor: '#0f172a',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.04,
+                shadowRadius: 6,
+                elevation: 1,
+                borderWidth: 1,
+                borderColor: 'rgba(226,232,240,0.6)',
+              }}
+            >
+              <LogOut size={18} color="#64748b" />
             </Pressable>
           </View>
         }
@@ -64,20 +87,20 @@ export default function TenantHomeScreen() {
           data={invoices}
           keyExtractor={i => i.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#3b82f6" />}
-          contentContainerClassName="px-4"
+          contentContainerClassName="px-5 pb-4"
           renderItem={({ item }) => (
             <Card className="mb-3">
-              <View className="flex-row items-center justify-between mb-2">
+              <View className="flex-row items-center justify-between mb-3">
                 <Text className="text-base font-semibold text-foreground">{item.invoice_number}</Text>
                 <StatusBadge status={item.status} />
               </View>
-              <Text className="text-2xl font-bold text-foreground">J${item.amount.toLocaleString()}</Text>
-              <Text className="text-xs text-muted-foreground mt-1">Due {formatDate(item.due_date)}</Text>
+              <Text className="text-3xl font-bold text-foreground tracking-tight">J${item.amount.toLocaleString()}</Text>
+              <Text className="text-xs text-muted-foreground mt-1.5">Due {formatDate(item.due_date)}</Text>
               {item.description ? <Text className="text-sm text-muted-foreground mt-1">{item.description}</Text> : null}
               {item.status !== 'paid' && (
                 <Button
-                  size="sm"
-                  className="mt-3"
+                  size="lg"
+                  className="mt-4"
                   onPress={() => router.push({ pathname: '/(tenant)/payment', params: { invoiceId: item.id, token: item.payment_token, amount: String(item.amount) } })}
                 >
                   Pay Now

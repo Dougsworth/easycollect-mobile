@@ -1,5 +1,5 @@
 import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system';
+import { Paths, File } from 'expo-file-system';
 
 interface CsvColumn {
   key: string;
@@ -22,10 +22,10 @@ export async function exportToCsv(filename: string, rows: Record<string, unknown
   );
 
   const csv = [header, ...csvRows].join('\n');
-  const fileUri = `${FileSystem.cacheDirectory}${filename}`;
-  await FileSystem.writeAsStringAsync(fileUri, csv, { encoding: FileSystem.EncodingType.UTF8 });
+  const file = new File(Paths.cache, filename);
+  await file.write(csv);
 
   if (await Sharing.isAvailableAsync()) {
-    await Sharing.shareAsync(fileUri, { mimeType: 'text/csv', UTI: 'public.comma-separated-values-text' });
+    await Sharing.shareAsync(file.uri, { mimeType: 'text/csv', UTI: 'public.comma-separated-values-text' });
   }
 }

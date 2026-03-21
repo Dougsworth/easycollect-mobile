@@ -4,6 +4,8 @@ import { useRouter } from 'expo-router';
 import { Bell } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUnreadCount } from '@/shared/services/notifications';
+import { supabase } from '@/lib/supabase';
+import { s, ms } from '@/lib/responsive';
 
 export function NotificationBell() {
   const { user } = useAuth();
@@ -12,21 +14,52 @@ export function NotificationBell() {
 
   useEffect(() => {
     if (!user) return;
+
     getUnreadCount(user.id).then(setCount).catch(console.error);
+
+    const channel = supabase
+      .channel('notification-bell')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `landlord_id=eq.${user.id}`,
+        },
+        () => {
+          getUnreadCount(user.id).then(setCount).catch(() => {});
+        },
+      )
+      .subscribe();
 
     const interval = setInterval(() => {
       getUnreadCount(user.id).then(setCount).catch(() => {});
-    }, 30000);
+    }, 60000);
 
-    return () => clearInterval(interval);
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
   }, [user]);
 
+  const badgeSize = s(16);
+
   return (
-    <Pressable onPress={() => router.push('/(landlord)/(more)/notifications')} className="relative p-2">
-      <Bell size={22} color="#111827" />
+    <Pressable onPress={() => router.push('/(landlord)/(more)/notifications')} className="relative" style={{ padding: s(8) }}>
+      <Bell size={s(20)} color="#0f172a" />
       {count > 0 && (
-        <View className="absolute -top-0.5 -right-0.5 bg-destructive rounded-full min-w-[18px] h-[18px] items-center justify-center px-1">
-          <Text className="text-[10px] font-bold text-white">{count > 99 ? '99+' : count}</Text>
+        <View
+          className="absolute bg-destructive rounded-full items-center justify-center"
+          style={{
+            top: s(2),
+            right: s(2),
+            minWidth: badgeSize,
+            height: badgeSize,
+            paddingHorizontal: s(3),
+          }}
+        >
+          <Text style={{ fontSize: ms(8) }} className="font-bold text-white">{count > 99 ? '99+' : count}</Text>
         </View>
       )}
     </Pressable>

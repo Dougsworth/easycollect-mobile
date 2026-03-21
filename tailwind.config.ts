@@ -11,33 +11,36 @@ export default {
       colors: {
         background: {
           DEFAULT: '#ffffff',
-          secondary: '#f9fafb',
+          secondary: '#f8fafc',
         },
-        foreground: '#111827',
+        foreground: '#0f172a',
         card: '#ffffff',
-        border: '#e5e7eb',
+        border: '#e2e8f0',
         primary: {
           DEFAULT: '#3b82f6',
           muted: '#dbeafe',
         },
         secondary: {
-          DEFAULT: '#f3f4f6',
+          DEFAULT: '#f1f5f9',
+        },
+        accent: {
+          DEFAULT: '#60a5fa',
         },
         success: {
-          DEFAULT: '#10b981',
-          muted: '#d1fae5',
+          DEFAULT: '#16a34a',
+          muted: '#f0fdf4',
         },
         warning: {
           DEFAULT: '#f59e0b',
-          muted: '#fef3c7',
+          muted: '#fffbeb',
         },
         destructive: {
           DEFAULT: '#ef4444',
-          muted: '#fee2e2',
+          muted: '#fef2f2',
         },
         muted: {
-          DEFAULT: '#f9fafb',
-          foreground: '#6b7280',
+          DEFAULT: '#f1f5f9',
+          foreground: '#64748b',
         },
       },
     },

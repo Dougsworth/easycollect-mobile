@@ -24,6 +24,7 @@ export default function PaymentsScreen() {
   const [search, setSearch] = useState('');
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('payments');
+  const [processingProof, setProcessingProof] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -31,7 +32,10 @@ export default function PaymentsScreen() {
       const [p, pr] = await Promise.all([getPayments(user.id), getProofsForLandlord(user.id)]);
       setPayments(p);
       setProofs(pr);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Error', 'Failed to load payment data. Pull down to retry.');
+    }
     finally { setLoading(false); }
   }, [user]);
 
@@ -50,27 +54,44 @@ export default function PaymentsScreen() {
   }, [payments, search]);
 
   const handleApprove = async (proof: PaymentProofWithDetails) => {
+    if (processingProof) return; // prevent double-tap
+    setProcessingProof(proof.id);
     try {
       await approveProof(proof.id, proof.landlord_id, proof.invoice_id, proof.tenant_id, proof.invoice_amount);
       Alert.alert('Approved', 'Payment proof approved and payment recorded.');
       loadData();
-    } catch { Alert.alert('Error', 'Failed to approve proof.'); }
+    } catch (err: any) {
+      Alert.alert('Error', err.message ?? 'Failed to approve proof.');
+    } finally {
+      setProcessingProof(null);
+    }
   };
 
   const handleReject = (proof: PaymentProofWithDetails) => {
+    if (processingProof) return;
     Alert.prompt?.('Reject Proof', 'Add a note (optional):', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Reject', style: 'destructive', onPress: async (note) => {
+      { text: 'Reject', style: 'destructive', onPress: async (note?: string) => {
+        setProcessingProof(proof.id);
         try {
           await rejectProof(proof.id, proof.landlord_id, note);
           loadData();
-        } catch { Alert.alert('Error', 'Failed to reject proof.'); }
+        } catch (err: any) {
+          Alert.alert('Error', err.message ?? 'Failed to reject proof.');
+        } finally {
+          setProcessingProof(null);
+        }
       }},
     ]) ?? (async () => {
+      setProcessingProof(proof.id);
       try {
         await rejectProof(proof.id, proof.landlord_id);
         loadData();
-      } catch { Alert.alert('Error', 'Failed to reject proof.'); }
+      } catch (err: any) {
+        Alert.alert('Error', err.message ?? 'Failed to reject proof.');
+      } finally {
+        setProcessingProof(null);
+      }
     })();
   };
 
@@ -87,14 +108,29 @@ export default function PaymentsScreen() {
 
       {tab === 'payments' ? (
         <>
-          <View className="px-4 mb-3">
-            <View className="flex-row items-center bg-white rounded-xl border border-border px-3 h-11">
-              <Search size={18} color="#9ca3af" />
-              <TextInput placeholder="Search payments..." value={search} onChangeText={setSearch} className="flex-1 ml-2 text-base text-foreground" placeholderTextColor="#9ca3af" />
+          <View className="px-5 mb-3">
+            <View
+              className="flex-row items-center bg-white rounded-xl px-4 h-12"
+              style={{
+                shadowColor: '#0f172a',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.04,
+                shadowRadius: 6,
+                elevation: 2,
+              }}
+            >
+              <Search size={18} color="#94a3b8" />
+              <TextInput
+                placeholder="Search payments..."
+                value={search}
+                onChangeText={setSearch}
+                className="flex-1 ml-3 text-base text-foreground"
+                placeholderTextColor="#94a3b8"
+              />
             </View>
           </View>
           {loading ? (
-            <View className="px-4 gap-3">{[1,2,3].map(i => <Skeleton key={i} className="h-16 w-full" />)}</View>
+            <View className="px-5 gap-3">{[1,2,3].map(i => <Skeleton key={i} className="h-20 w-full" />)}</View>
           ) : filteredPayments.length === 0 ? (
             <EmptyState title="No payments found" description="Payments will appear here when recorded" />
           ) : (
@@ -102,55 +138,81 @@ export default function PaymentsScreen() {
               data={filteredPayments}
               keyExtractor={i => i.id}
               refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#3b82f6" />}
+              contentContainerClassName="pb-4"
               renderItem={({ item }) => (
-                <View className="flex-row items-center px-4 py-3 bg-white border-b border-border/50">
+                <View
+                  className="flex-row items-center mx-5 mb-3 p-4 bg-white rounded-2xl"
+                  style={{
+                    shadowColor: '#0f172a',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.04,
+                    shadowRadius: 8,
+                    elevation: 2,
+                  }}
+                >
                   <AvatarInitial name={`${item.tenant_first_name} ${item.tenant_last_name}`} size="sm" />
                   <View className="flex-1 ml-3">
-                    <Text className="text-sm font-medium text-foreground">{item.tenant_first_name} {item.tenant_last_name}</Text>
-                    <Text className="text-xs text-muted-foreground">{item.method} — {formatDate(item.payment_date)}</Text>
+                    <Text className="text-sm font-semibold text-foreground">{item.tenant_first_name} {item.tenant_last_name}</Text>
+                    <Text className="text-xs text-muted-foreground mt-0.5">{item.method} — {formatDate(item.payment_date)}</Text>
                   </View>
-                  <Text className="text-sm font-semibold text-success">J${item.amount.toLocaleString()}</Text>
+                  <Text className="text-sm font-bold text-success">J${item.amount.toLocaleString()}</Text>
                 </View>
               )}
             />
           )}
         </>
       ) : (
-        <ScrollView className="flex-1 px-4" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#3b82f6" />}>
+        <ScrollView className="flex-1 px-5" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#3b82f6" />}>
           {pendingProofs.length === 0 ? (
             <EmptyState title="No proofs to review" description="Payment proofs submitted by tenants will appear here" />
           ) : (
-            pendingProofs.map(proof => (
-              <Card key={proof.id} className="mb-3">
-                <View className="flex-row items-center mb-2">
-                  <AvatarInitial name={`${proof.tenant_first_name} ${proof.tenant_last_name}`} size="sm" />
-                  <View className="ml-2 flex-1">
-                    <Text className="text-sm font-medium text-foreground">{proof.tenant_first_name} {proof.tenant_last_name}</Text>
-                    <Text className="text-xs text-muted-foreground">{proof.invoice_number} — J${proof.invoice_amount.toLocaleString()}</Text>
-                  </View>
-                </View>
-                <Pressable onPress={() => setZoomImage(proof.image_url)}>
-                  <Image source={{ uri: proof.image_url }} className="w-full h-48 rounded-xl bg-muted mb-3" resizeMode="cover" />
-                  <View className="absolute top-2 right-2 bg-black/50 rounded-full p-1.5">
-                    <Search size={14} color="#fff" />
-                  </View>
-                </Pressable>
-                <View className="flex-row gap-2">
-                  <Button variant="default" size="sm" onPress={() => handleApprove(proof)} className="flex-1">
-                    <View className="flex-row items-center gap-1">
-                      <CheckCircle size={16} color="#fff" />
-                      <Text className="text-white font-semibold text-sm">Approve</Text>
+            pendingProofs.map(proof => {
+              const isProcessing = processingProof === proof.id;
+              return (
+                <Card key={proof.id} className="mb-3">
+                  <View className="flex-row items-center mb-3">
+                    <AvatarInitial name={`${proof.tenant_first_name} ${proof.tenant_last_name}`} size="sm" />
+                    <View className="ml-3 flex-1">
+                      <Text className="text-sm font-semibold text-foreground">{proof.tenant_first_name} {proof.tenant_last_name}</Text>
+                      <Text className="text-xs text-muted-foreground mt-0.5">{proof.invoice_number} — J${proof.invoice_amount.toLocaleString()}</Text>
                     </View>
-                  </Button>
-                  <Button variant="destructive" size="sm" onPress={() => handleReject(proof)} className="flex-1">
-                    <View className="flex-row items-center gap-1">
-                      <XCircle size={16} color="#fff" />
-                      <Text className="text-white font-semibold text-sm">Reject</Text>
+                  </View>
+                  <Pressable onPress={() => setZoomImage(proof.image_url)} className="rounded-xl overflow-hidden mb-3">
+                    <Image source={{ uri: proof.image_url }} className="w-full h-48 bg-muted" resizeMode="cover" />
+                    <View className="absolute top-2 right-2 bg-black/40 rounded-full p-1.5">
+                      <Search size={14} color="#fff" />
                     </View>
-                  </Button>
-                </View>
-              </Card>
-            ))
+                  </Pressable>
+                  <View className="flex-row gap-3">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onPress={() => handleApprove(proof)}
+                      className="flex-1"
+                      loading={isProcessing}
+                      disabled={!!processingProof}
+                    >
+                      <View className="flex-row items-center gap-1.5">
+                        <CheckCircle size={16} color="#fff" />
+                        <Text className="text-white font-semibold text-sm">Approve</Text>
+                      </View>
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onPress={() => handleReject(proof)}
+                      className="flex-1"
+                      disabled={!!processingProof}
+                    >
+                      <View className="flex-row items-center gap-1.5">
+                        <XCircle size={16} color="#fff" />
+                        <Text className="text-white font-semibold text-sm">Reject</Text>
+                      </View>
+                    </Button>
+                  </View>
+                </Card>
+              );
+            })
           )}
         </ScrollView>
       )}
