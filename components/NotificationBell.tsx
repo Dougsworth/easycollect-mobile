@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Pressable, View, Text } from 'react-native';
+import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Bell } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUnreadCount } from '@/shared/services/notifications';
 import { supabase } from '@/lib/supabase';
-import { s, ms } from '@/lib/responsive';
 
 export function NotificationBell() {
   const { user } = useAuth();
@@ -21,15 +20,8 @@ export function NotificationBell() {
       .channel('notification-bell')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notifications',
-          filter: `landlord_id=eq.${user.id}`,
-        },
-        () => {
-          getUnreadCount(user.id).then(setCount).catch(() => {});
-        },
+        { event: '*', schema: 'public', table: 'notifications', filter: `landlord_id=eq.${user.id}` },
+        () => { getUnreadCount(user.id).then(setCount).catch(() => {}); },
       )
       .subscribe();
 
@@ -37,31 +29,46 @@ export function NotificationBell() {
       getUnreadCount(user.id).then(setCount).catch(() => {});
     }, 60000);
 
-    return () => {
-      supabase.removeChannel(channel);
-      clearInterval(interval);
-    };
+    return () => { supabase.removeChannel(channel); clearInterval(interval); };
   }, [user]);
 
-  const badgeSize = s(16);
-
   return (
-    <Pressable onPress={() => router.push('/(landlord)/(more)/notifications')} className="relative" style={{ padding: s(8) }}>
-      <Bell size={s(20)} color="#0f172a" />
+    <Pressable
+      onPress={() => router.push('/(landlord)/(more)/notifications')}
+      accessibilityRole="button"
+      accessibilityLabel={count > 0 ? `${count} unread notifications` : 'Notifications'}
+      style={st.btn}
+    >
+      <Bell size={20} color="#0f172a" />
       {count > 0 && (
-        <View
-          className="absolute bg-destructive rounded-full items-center justify-center"
-          style={{
-            top: s(2),
-            right: s(2),
-            minWidth: badgeSize,
-            height: badgeSize,
-            paddingHorizontal: s(3),
-          }}
-        >
-          <Text style={{ fontSize: ms(8) }} className="font-bold text-white">{count > 99 ? '99+' : count}</Text>
+        <View style={st.badge}>
+          <Text style={st.badgeText}>{count > 99 ? '99+' : count}</Text>
         </View>
       )}
     </Pressable>
   );
 }
+
+const st = StyleSheet.create({
+  btn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#ef4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  badgeText: { fontSize: 9, fontWeight: '700', color: '#ffffff' },
+});

@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { View, Text, Pressable, Modal, FlatList, SafeAreaView } from 'react-native';
+import { View, Text, Pressable, Modal, FlatList, SafeAreaView, StyleSheet } from 'react-native';
 import { ChevronDown, Check } from 'lucide-react-native';
 import { cn } from '@/lib/utils';
-import { s, ms } from '@/lib/responsive';
 
 interface SelectOption {
   label: string;
@@ -24,40 +23,35 @@ export function Select({ label, placeholder = 'Select...', options, value, onVal
   const selectedOption = options.find(o => o.value === value);
 
   return (
-    <View className={cn('mb-4', className)}>
-      {label && <Text style={{ fontSize: ms(13), marginBottom: s(6) }} className="font-semibold text-foreground">{label}</Text>}
+    <View className={cn(className)} style={{ marginBottom: 14 }}>
+      {label && <Text style={st.label}>{label}</Text>}
       <Pressable
         onPress={() => setOpen(true)}
-        className={cn(
-          'rounded-xl border bg-white flex-row items-center justify-between',
-          error ? 'border-destructive' : 'border-border',
-        )}
-        style={{ height: s(46), paddingHorizontal: s(16) }}
+        style={[st.trigger, error && { borderColor: '#ef4444' }]}
       >
-        <Text style={{ fontSize: ms(15) }} className={selectedOption ? 'text-foreground' : 'text-gray-400'}>
+        <Text style={[st.triggerText, !selectedOption && { color: '#94a3b8' }]}>
           {selectedOption?.label ?? placeholder}
         </Text>
-        <ChevronDown size={s(16)} color="#9ca3af" />
+        <ChevronDown size={16} color="#94a3b8" />
       </Pressable>
-      {error && <Text style={{ fontSize: ms(13), marginTop: s(4) }} className="text-destructive">{error}</Text>}
+      {error && <Text style={st.error}>{error}</Text>}
 
       <Modal visible={open} transparent animationType="slide">
-        <Pressable className="flex-1 bg-black/30" onPress={() => setOpen(false)} />
-        <SafeAreaView className="bg-white rounded-t-3xl max-h-[60%]">
-          <View style={{ padding: s(16) }} className="border-b border-border">
-            <Text style={{ fontSize: ms(17) }} className="font-semibold text-foreground">{label ?? 'Select'}</Text>
+        <Pressable style={st.overlay} onPress={() => setOpen(false)} />
+        <SafeAreaView style={st.sheet}>
+          <View style={st.sheetHeader}>
+            <Text style={st.sheetTitle}>{label ?? 'Select'}</Text>
           </View>
           <FlatList
             data={options}
-            keyExtractor={(item) => item.value}
+            keyExtractor={item => item.value}
             renderItem={({ item }) => (
               <Pressable
                 onPress={() => { onValueChange(item.value); setOpen(false); }}
-                className="flex-row items-center justify-between border-b border-border/50"
-                style={{ paddingHorizontal: s(16), paddingVertical: s(14) }}
+                style={st.option}
               >
-                <Text style={{ fontSize: ms(15) }} className="text-foreground">{item.label}</Text>
-                {item.value === value && <Check size={s(16)} color="#3b82f6" />}
+                <Text style={st.optionText}>{item.label}</Text>
+                {item.value === value && <Check size={16} color="#3b82f6" />}
               </Pressable>
             )}
           />
@@ -66,3 +60,34 @@ export function Select({ label, placeholder = 'Select...', options, value, onVal
     </View>
   );
 }
+
+const st = StyleSheet.create({
+  label: { fontSize: 13, fontWeight: '500', color: '#0f172a', marginBottom: 6 },
+  trigger: {
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  triggerText: { fontSize: 15, color: '#0f172a' },
+  error: { fontSize: 12, color: '#ef4444', marginTop: 4 },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)' },
+  sheet: { backgroundColor: '#ffffff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '60%' },
+  sheetHeader: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#e2e8f0' },
+  sheetTitle: { fontSize: 16, fontWeight: '600', color: '#0f172a' },
+  option: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  optionText: { fontSize: 15, color: '#0f172a' },
+});

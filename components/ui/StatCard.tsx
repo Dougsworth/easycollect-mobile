@@ -1,6 +1,5 @@
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { cn } from '@/lib/utils';
-import { s, ms } from '@/lib/responsive';
 
 interface StatCardProps {
   title: string;
@@ -11,45 +10,74 @@ interface StatCardProps {
   className?: string;
 }
 
-const cardStyles = {
-  primary: { bg: '#ffffff', border: 'rgba(59,130,246,0.15)', iconBg: '#eff6ff', valueColor: '#2563eb' },
-  success: { bg: '#ffffff', border: 'rgba(22,163,74,0.15)', iconBg: '#f0fdf4', valueColor: '#16a34a' },
-  warning: { bg: '#ffffff', border: 'rgba(245,158,11,0.15)', iconBg: '#fffbeb', valueColor: '#b45309' },
-  destructive: { bg: '#ffffff', border: 'rgba(239,68,68,0.15)', iconBg: '#fef2f2', valueColor: '#dc2626' },
+const iconBg = {
+  primary: '#eff6ff',
+  success: '#ecfdf5',
+  warning: '#fffbeb',
+  destructive: '#fef2f2',
+};
+
+const valueColor = {
+  primary: '#0f172a',
+  success: '#059669',
+  warning: '#b45309',
+  destructive: '#0f172a',
 };
 
 export function StatCard({ title, value, subtitle, icon, color = 'primary', className }: StatCardProps) {
-  const s_ = cardStyles[color];
   return (
-    <View
-      className={cn('rounded-2xl', className)}
-      style={{
-        padding: s(14),
-        backgroundColor: s_.bg,
-        borderWidth: 1,
-        borderColor: s_.border,
-        shadowColor: '#0f172a',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-        elevation: 2,
-      }}
-    >
-      <View className="flex-row items-center justify-between" style={{ marginBottom: s(8) }}>
-        <Text style={{ fontSize: ms(12), letterSpacing: 0.5 }} className="font-medium text-muted-foreground uppercase">{title}</Text>
+    <View className={cn(className)} style={st.card}>
+      <View style={st.header}>
+        <Text style={st.label}>{title}</Text>
         {icon && (
-          <View
-            className="rounded-xl items-center justify-center"
-            style={{ height: s(32), width: s(32), backgroundColor: s_.iconBg }}
-          >
+          <View style={[st.iconWrap, { backgroundColor: iconBg[color] }]}>
             {icon}
           </View>
         )}
       </View>
-      <Text style={{ fontSize: ms(22), color: s_.valueColor }} className="font-bold tracking-tight">{value}</Text>
-      {subtitle && (
-        <Text style={{ fontSize: ms(11), marginTop: s(4) }} className="text-muted-foreground">{subtitle}</Text>
-      )}
+      <Text style={[st.value, { color: valueColor[color] }]}>{value}</Text>
+      {subtitle && <Text style={st.sub}>{subtitle}</Text>}
     </View>
   );
 }
+
+const st = StyleSheet.create({
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    padding: 14,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  label: {
+    fontSize: 11,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    color: '#94a3b8',
+  },
+  iconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  value: {
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+  },
+  sub: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#64748b',
+    marginTop: 2,
+  },
+});

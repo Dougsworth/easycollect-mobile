@@ -1,107 +1,116 @@
-import { View, Text, Pressable, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, Pressable, ScrollView, StyleSheet, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Building2, BarChart3, Settings, Bell, ClipboardList, CalendarDays, LogOut, ChevronRight } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
-import { PageHeader } from '@/components/PageHeader';
-import { AvatarInitial } from '@/components/ui';
 
 const menuItems = [
-  { label: 'Properties', icon: Building2, route: '/(landlord)/(more)/properties', color: '#3b82f6' },
-  { label: 'Reports', icon: BarChart3, route: '/(landlord)/(more)/reports', color: '#10b981' },
-  { label: 'Settings', icon: Settings, route: '/(landlord)/(more)/settings', color: '#64748b' },
-  { label: 'Notifications', icon: Bell, route: '/(landlord)/(more)/notifications', color: '#f59e0b' },
-  { label: 'Activity Log', icon: ClipboardList, route: '/(landlord)/(more)/activity-log', color: '#8b5cf6' },
-  { label: 'Calendar', icon: CalendarDays, route: '/(landlord)/(more)/calendar', color: '#ec4899' },
+  { label: 'Properties', icon: Building2, route: '/(landlord)/(more)/properties', color: '#0f172a' },
+  { label: 'Reports', icon: BarChart3, route: '/(landlord)/(more)/reports', color: '#0f172a' },
+  { label: 'Calendar', icon: CalendarDays, route: '/(landlord)/(more)/calendar', color: '#0f172a' },
+  { label: 'Notifications', icon: Bell, route: '/(landlord)/(more)/notifications', color: '#0f172a' },
+  { label: 'Activity Log', icon: ClipboardList, route: '/(landlord)/(more)/activity-log', color: '#0f172a' },
+  { label: 'Settings', icon: Settings, route: '/(landlord)/(more)/settings', color: '#0f172a' },
 ];
+
+function getInitials(name: string) {
+  return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+}
 
 export default function MoreScreen() {
   const { signOut, profile } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+
+  const handleSignOut = () => {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign Out', style: 'destructive', onPress: () => signOut() },
+    ]);
+  };
 
   return (
-    <SafeAreaView className="flex-1 bg-background-secondary">
-      <PageHeader title="More" />
-      <ScrollView className="flex-1 px-5" contentContainerClassName="pb-8">
-        {/* Profile Card */}
+    <View style={[st.container, { paddingTop: insets.top }]}>
+      <Text style={st.headerTitle}>More</Text>
+
+      <ScrollView contentContainerStyle={[st.scroll, { paddingBottom: insets.bottom + 24 }]}>
+        {/* Profile */}
         {profile && (
           <Pressable
             onPress={() => router.push('/(landlord)/(more)/settings' as any)}
-            className="bg-white rounded-2xl p-5 mb-5 flex-row items-center"
-            style={{
-              borderWidth: 1,
-              borderColor: 'rgba(226,232,240,0.6)',
-              shadowColor: '#0f172a',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.04,
-              shadowRadius: 8,
-              elevation: 2,
-            }}
+            style={({ pressed }) => [st.profileRow, pressed && { opacity: 0.85 }]}
           >
-            <AvatarInitial name={`${profile.first_name} ${profile.last_name}`} size="lg" />
-            <View className="flex-1 ml-4">
-              <Text className="text-lg font-bold text-foreground tracking-tight">{profile.first_name} {profile.last_name}</Text>
-              <Text className="text-sm text-muted-foreground mt-0.5">{profile.email}</Text>
+            <View style={st.profileAvatar}>
+              <Text style={st.profileInitials}>
+                {getInitials(`${profile.first_name} ${profile.last_name}`)}
+              </Text>
             </View>
-            <ChevronRight size={20} color="#94a3b8" />
+            <View style={{ flex: 1 }}>
+              <Text style={st.profileName}>{profile.first_name} {profile.last_name}</Text>
+              <Text style={st.profileEmail}>{profile.email}</Text>
+            </View>
+            <ChevronRight size={16} color="#cbd5e1" />
           </Pressable>
         )}
 
-        {/* Menu Items */}
-        <View
-          className="bg-white rounded-2xl mb-5 overflow-hidden"
-          style={{
-            borderWidth: 1,
-            borderColor: 'rgba(226,232,240,0.6)',
-            shadowColor: '#0f172a',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.04,
-            shadowRadius: 8,
-            elevation: 2,
-          }}
-        >
-          {menuItems.map((item, idx) => (
-            <Pressable
-              key={item.label}
-              onPress={() => router.push(item.route as any)}
-              className="flex-row items-center px-5 py-4"
-              style={({ pressed }) => ({
-                backgroundColor: pressed ? '#f8fafc' : '#fff',
-                borderBottomWidth: idx < menuItems.length - 1 ? 1 : 0,
-                borderBottomColor: '#f1f5f9',
-              })}
-            >
-              <View
-                className="h-10 w-10 rounded-xl items-center justify-center"
-                style={{ backgroundColor: item.color + '12' }}
-              >
-                <item.icon size={20} color={item.color} />
-              </View>
-              <Text className="flex-1 ml-3 text-base font-medium text-foreground">{item.label}</Text>
-              <ChevronRight size={18} color="#cbd5e1" />
-            </Pressable>
-          ))}
-        </View>
+        <View style={st.divider} />
+
+        {/* Menu items */}
+        {menuItems.map((item) => (
+          <Pressable
+            key={item.label}
+            onPress={() => router.push(item.route as any)}
+            style={({ pressed }) => [st.menuRow, pressed && { backgroundColor: '#f8fafc' }]}
+          >
+            <item.icon size={20} color="#64748b" />
+            <Text style={st.menuLabel}>{item.label}</Text>
+            <ChevronRight size={16} color="#cbd5e1" />
+          </Pressable>
+        ))}
+
+        <View style={st.divider} />
 
         {/* Sign Out */}
-        <Pressable
-          onPress={signOut}
-          className="flex-row items-center justify-center bg-white rounded-2xl p-4 gap-2"
-          style={({ pressed }: { pressed: boolean }) => ({
-            opacity: pressed ? 0.8 : 1,
-            borderWidth: 1,
-            borderColor: 'rgba(226,232,240,0.6)',
-            shadowColor: '#0f172a',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.03,
-            shadowRadius: 6,
-            elevation: 1,
-          })}
-        >
-          <LogOut size={18} color="#ef4444" />
-          <Text className="text-base font-semibold text-destructive">Sign Out</Text>
+        <Pressable onPress={handleSignOut} style={st.signOutRow}>
+          <LogOut size={20} color="#ef4444" />
+          <Text style={st.signOutText}>Sign Out</Text>
         </Pressable>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
+
+const st = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#ffffff' },
+  headerTitle: {
+    fontSize: 28, fontWeight: '700', color: '#0f172a', letterSpacing: -0.5,
+    paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16,
+  },
+  scroll: { paddingHorizontal: 20 },
+
+  // Profile
+  profileRow: {
+    flexDirection: 'row', alignItems: 'center', paddingVertical: 4,
+  },
+  profileAvatar: {
+    width: 48, height: 48, borderRadius: 24,
+    backgroundColor: '#0f172a', alignItems: 'center', justifyContent: 'center', marginRight: 14,
+  },
+  profileInitials: { fontSize: 16, fontWeight: '700', color: '#ffffff' },
+  profileName: { fontSize: 17, fontWeight: '600', color: '#0f172a' },
+  profileEmail: { fontSize: 13, color: '#94a3b8', marginTop: 1 },
+
+  divider: { height: 1, backgroundColor: '#f1f5f9', marginVertical: 16 },
+
+  // Menu
+  menuRow: {
+    flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 14,
+  },
+  menuLabel: { flex: 1, fontSize: 16, fontWeight: '500', color: '#0f172a' },
+
+  // Sign out
+  signOutRow: {
+    flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 14,
+  },
+  signOutText: { fontSize: 16, fontWeight: '500', color: '#ef4444' },
+});

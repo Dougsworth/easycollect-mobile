@@ -5,6 +5,8 @@ import * as Linking from 'expo-linking';
 import { supabase } from '@/lib/supabase';
 import type { Profile } from '@/shared/types/app.types';
 
+WebBrowser.maybeCompleteAuthSession();
+
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
@@ -119,7 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      const redirectUrl = Linking.createURL('/');
+      const redirectUrl = Linking.createURL('/(auth)');
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -134,8 +136,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
 
       if (result.type === 'success') {
-        const url = new URL(result.url);
-        const params = new URLSearchParams(url.hash.substring(1));
+        const url = result.url;
+        // Tokens can be in hash fragment or query params
+        const hashPart = url.includes('#') ? url.split('#')[1] : '';
+        const queryPart = url.includes('?') ? url.split('?')[1]?.split('#')[0] : '';
+        const params = new URLSearchParams(hashPart || queryPart);
         const accessToken = params.get('access_token');
         const refreshToken = params.get('refresh_token');
 
@@ -144,8 +149,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
+      // Ensure browser is dismissed
+      WebBrowser.dismissBrowser();
+
       return { error: null };
     } catch (err: any) {
+      WebBrowser.dismissBrowser();
       return { error: err.message ?? 'Google sign-in failed' };
     }
   };

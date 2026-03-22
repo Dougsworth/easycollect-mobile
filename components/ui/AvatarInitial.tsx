@@ -1,6 +1,5 @@
 import { View, Text } from 'react-native';
 import { cn } from '@/lib/utils';
-import { s, ms } from '@/lib/responsive';
 
 interface AvatarInitialProps {
   name: string;
@@ -8,47 +7,37 @@ interface AvatarInitialProps {
   className?: string;
 }
 
-const dimensions = {
-  sm: s(30),
-  md: s(38),
-  lg: s(46),
-};
+const dims = { sm: 30, md: 36, lg: 44 };
+const fonts = { sm: 11, md: 13, lg: 15 };
 
-const fontSizes = {
-  sm: ms(11),
-  md: ms(13),
-  lg: ms(15),
-};
-
-const colors = [
-  'bg-primary', 'bg-success', 'bg-warning', 'bg-purple-500',
-  'bg-pink-500', 'bg-indigo-500', 'bg-teal-500', 'bg-orange-500',
+const palette = [
+  { bg: '#eff6ff', text: '#3b82f6' },
+  { bg: '#ecfdf5', text: '#10b981' },
+  { bg: '#fef3c7', text: '#d97706' },
+  { bg: '#fce7f3', text: '#ec4899' },
+  { bg: '#ede9fe', text: '#7c3aed' },
+  { bg: '#e0f2fe', text: '#0284c7' },
+  { bg: '#fef2f2', text: '#ef4444' },
+  { bg: '#f0fdf4', text: '#16a34a' },
 ];
 
 function getColor(name: string) {
   let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return palette[Math.abs(hash) % palette.length];
 }
 
 export function AvatarInitial({ name, size = 'md', className }: AvatarInitialProps) {
-  const initials = name
-    .split(' ')
-    .map(n => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-
-  const d = dimensions[size];
+  const initials = name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+  const d = dims[size];
+  const c = getColor(name);
 
   return (
     <View
-      className={cn('rounded-full items-center justify-center', getColor(name), className)}
-      style={{ width: d, height: d }}
+      className={cn(className)}
+      style={{ width: d, height: d, borderRadius: d / 2, backgroundColor: c.bg, alignItems: 'center', justifyContent: 'center' }}
     >
-      <Text style={{ fontSize: fontSizes[size] }} className="font-semibold text-white">{initials}</Text>
+      <Text style={{ fontSize: fonts[size], fontWeight: '600', color: c.text }}>{initials}</Text>
     </View>
   );
 }

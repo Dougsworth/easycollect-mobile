@@ -73,10 +73,15 @@ export default function LoginScreen() {
       return;
     }
     setLoading(true);
-    const { error: authError } = await signIn(email.trim(), password);
-    setLoading(false);
-    if (authError) {
-      setError(authError);
+    try {
+      const { error: authError } = await signIn(email.trim(), password);
+      if (authError) {
+        setError(authError);
+      }
+    } catch (err: any) {
+      setError(err.message ?? 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 

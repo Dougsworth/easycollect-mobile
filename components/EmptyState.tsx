@@ -1,6 +1,5 @@
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Button } from '@/components/ui';
-import { s, ms } from '@/lib/responsive';
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -12,22 +11,45 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon, title, description, actionLabel, onAction }: EmptyStateProps) {
   return (
-    <View className="flex-1 items-center justify-center" style={{ paddingHorizontal: s(32), paddingVertical: s(60) }}>
-      {icon && (
-        <View
-          className="rounded-full bg-muted items-center justify-center"
-          style={{ height: s(64), width: s(64), marginBottom: s(18) }}
-        >
-          {icon}
-        </View>
-      )}
-      <Text style={{ fontSize: ms(17) }} className="font-bold text-foreground text-center tracking-tight">{title}</Text>
-      {description && (
-        <Text style={{ fontSize: ms(13), marginTop: s(8), lineHeight: ms(19) }} className="text-muted-foreground text-center">{description}</Text>
-      )}
+    <View style={st.container}>
+      {icon && <View style={st.iconWrap}>{icon}</View>}
+      <Text style={st.title}>{title}</Text>
+      {description && <Text style={st.desc}>{description}</Text>}
       {actionLabel && onAction && (
-        <Button onPress={onAction} className="mt-6" size="lg">{actionLabel}</Button>
+        <Button onPress={onAction} style={{ marginTop: 20 }} size="default">{actionLabel}</Button>
       )}
     </View>
   );
 }
+
+const st = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
+    paddingVertical: 60,
+  },
+  iconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0f172a',
+    textAlign: 'center',
+  },
+  desc: {
+    fontSize: 13,
+    color: '#94a3b8',
+    textAlign: 'center',
+    marginTop: 6,
+    lineHeight: 18,
+  },
+});

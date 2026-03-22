@@ -1,8 +1,7 @@
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import { cn } from '@/lib/utils';
-import { s, ms } from '@/lib/responsive';
 
 interface PageHeaderProps {
   title: string;
@@ -16,32 +15,47 @@ export function PageHeader({ title, subtitle, showBack = false, right, className
   const router = useRouter();
 
   return (
-    <View
-      className={cn('flex-row items-center justify-between', className)}
-      style={{ paddingHorizontal: s(20), paddingBottom: s(14), paddingTop: s(8) }}
-    >
-      <View className="flex-row items-center flex-1">
+    <View className={cn(className)} style={st.container}>
+      <View style={st.left}>
         {showBack && (
           <Pressable
             onPress={() => router.back()}
-            className="rounded-full items-center justify-center"
-            style={({ pressed }: { pressed: boolean }) => ({
-              opacity: pressed ? 0.7 : 1,
-              marginRight: s(12),
-              height: s(36),
-              width: s(36),
-              backgroundColor: '#f1f5f9',
-            })}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            style={({ pressed }) => [st.backBtn, pressed && { opacity: 0.6 }]}
           >
-            <ArrowLeft size={s(18)} color="#0f172a" />
+            <ArrowLeft size={18} color="#0f172a" />
           </Pressable>
         )}
-        <View className="flex-1">
-          <Text style={{ fontSize: ms(22), letterSpacing: -0.5 }} className="font-bold text-foreground">{title}</Text>
-          {subtitle && <Text style={{ fontSize: ms(13), marginTop: 2 }} className="text-muted-foreground">{subtitle}</Text>}
+        <View style={{ flex: 1 }}>
+          <Text style={st.title}>{title}</Text>
+          {subtitle && <Text style={st.subtitle}>{subtitle}</Text>}
         </View>
       </View>
       {right && <View>{right}</View>}
     </View>
   );
 }
+
+const st = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingBottom: 10,
+    paddingTop: 6,
+  },
+  left: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  backBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  title: { fontSize: 20, fontWeight: '600', color: '#0f172a', letterSpacing: -0.3 },
+  subtitle: { fontSize: 13, color: '#94a3b8', marginTop: 1 },
+});
